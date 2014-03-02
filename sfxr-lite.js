@@ -898,13 +898,13 @@ function synthesize(ps) {
             // Rescale [-1.0, 1.0) to [0, 256)
             sample = Math.floor((sample + 1) * 128);
             if (sample > 255) sample = 255;
-            if (sample < 0) sample = 0;
+            else if (sample < 0) sample = 0;
             buffer.push(sample);
         } else {
             // Rescale [-1.0, 1.0) to [-32768, 32768)
             sample = Math.floor(sample * (1 << 15));
             if (sample > (1 << 15) - 1) sample = (1 << 15) - 1;
-            if (sample < -(1 << 15)) sample = -(1 << 15);
+            else if (sample < -(1 << 15)) sample = -(1 << 15);
             buffer.push(sample & 0xFF);
             buffer.push((sample >> 8) & 0xFF);
         }
