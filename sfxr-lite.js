@@ -701,20 +701,17 @@ function synthesize(ps) {
     var fltw_d = 1.0 + ps.p_lpf_ramp * 0.0001;
     var fltdmp =
         5.0 / (1.0 + Math.pow(ps.p_lpf_resonance, 2.0) * 20.0) * (0.01 + fltw);
-    if (fltdmp > 0.8) {
-        fltdmp = 0.8;
-    }
+    if (fltdmp > 0.8) fltdmp = 0.8;
     var fltphp = 0.0;
-    var flthp = Math.pow(ps.p_hpf_freq, 2.0) * 0.1;
-    var flthp_d = 1.0 + ps.p_hpf_ramp * 0.0003;
+    var flthp = Math.pow(ps.p_hpf_freq, 2.0) * 0.1;  // function of t and flthp_d
+    var flthp_d = 1.0 + ps.p_hpf_ramp * 0.0003;  // constant
 
     // Vibrato
     var vib_phase = 0.0;
-    var vib_speed = Math.pow(ps.p_vib_speed, 2.0) * 0.01;
-    var vib_amp = ps.p_vib_strength * 0.5;
+    var vib_speed = Math.pow(ps.p_vib_speed, 2.0) * 0.01;  // constant
+    var vib_amp = ps.p_vib_strength * 0.5;  // constant
 
     // Envelope
-    var env_vol = 0.0;
     var env_stage = 0;
     var env_time = 0;
     var env_length = [
@@ -724,15 +721,16 @@ function synthesize(ps) {
     ];
 
     // Phaser
+    var PHASER_SIZE = 1024, PHASER_MASK = PHASER_SIZE - 1;
     var phase = 0;
     var fphase = Math.pow(ps.p_pha_offset, 2.0) * 1020.0;
     if (ps.p_pha_offset < 0.0) fphase = -fphase;
-    var fdphase = Math.pow(ps.p_pha_ramp, 2.0) * 1.0;
+    var fdphase = Math.pow(ps.p_pha_ramp, 2.0) * 1.0;  // constant
     if (ps.p_pha_ramp < 0.0) fdphase = -fdphase;
     var iphase = Math.abs(Math.floor(fphase));
     var ipp = 0;
     var phaser_buffer = [];
-    for (var i = 0; i < 1024; ++i) {
+    for (var i = 0; i < PHASER_SIZE; ++i) {
         phaser_buffer[i] = 0.0;
     }
 
@@ -786,12 +784,8 @@ function synthesize(ps) {
         }
 
         square_duty += square_slide;
-        if (square_duty < 0.0) {
-            square_duty = 0.0;
-        }
-        if (square_duty > 0.5) {
-            square_duty = 0.5;
-        }
+        if (square_duty < 0.0) square_duty = 0.0;
+        if (square_duty > 0.5) square_duty = 0.5;
 
         // Volume envelope
         env_time++;
@@ -802,6 +796,7 @@ function synthesize(ps) {
                 break;
             }
         }
+        var env_vol;
         if (env_stage === 0) {
             env_vol = env_time / env_length[0];
         } else if (env_stage === 1) {
@@ -813,23 +808,18 @@ function synthesize(ps) {
         // Phaser step
         fphase += fdphase;
         iphase = Math.abs(Math.floor(fphase));
-        if (iphase > 1023) {
-            iphase = 1023;
-        }
+        if (iphase > PHASER_MASK) iphase = PHASER_MASK;
 
         if (flthp_d != 0.0) {
             flthp *= flthp_d;
-            if (flthp < 0.00001) {
-                flthp = 0.00001;
-            }
-            if (flthp > 0.1) {
-                flthp = 0.1;
-            }
+            if (flthp < 0.00001) flthp = 0.00001;
+            if (flthp > 0.1) flthp = 0.1;
         }
 
         // 8x supersampling
         var sample = 0.0;
-        for (var si = 0; si < 8; ++si) {
+        var SUPERSAMPLES = 8;
+        for (var si = 0; si < SUPERSAMPLES; ++si) {
             var sub_sample = 0.0;
             phase++;
             if (phase >= period) {
@@ -866,12 +856,8 @@ function synthesize(ps) {
             // Low-pass filter
             var pp = fltp;
             fltw *= fltw_d;
-            if (fltw < 0.0) {
-                fltw = 0.0;
-            }
-            if (fltw > 0.1) {
-                fltw = 0.1;
-            }
+            if (fltw < 0.0) fltw = 0.0;
+            if (fltw > 0.1) fltw = 0.1;
             if (ps.p_lpf_freq != 1.0) {
                 fltdp += (sub_sample - fltp) * fltw;
                 fltdp -= fltdp * fltdmp;
@@ -887,16 +873,16 @@ function synthesize(ps) {
             sub_sample = fltphp;
 
             // Phaser
-            phaser_buffer[ipp & 1023] = sub_sample;
-            sub_sample += phaser_buffer[(ipp - iphase + 1024) & 1023];
-            ipp = (ipp + 1) & 1023;
+            phaser_buffer[ipp & PHASER_MASK] = sub_sample;
+            sub_sample += phaser_buffer[(ipp - iphase + PHASER_SIZE) & PHASER_MASK];
+            ipp = (ipp + 1) & PHASER_MASK;
 
             // final accumulation and envelope application
             sample += sub_sample * env_vol;
         }
 
         // Accumulate samples appropriately for sample rate
-        sample_sum += sample;
+        sample_sum += sample / SUPERSAMPLES;
         if (++num_summed >= summands) {
             num_summed = 0;
             sample = sample_sum / summands;
@@ -905,27 +891,20 @@ function synthesize(ps) {
             continue;
         }
 
-        sample /= 8;
         sample *= masterVolume;
         sample *= gain;
 
         if (ps.sample_size === 8) {
             // Rescale [-1.0, 1.0) to [0, 256)
             sample = Math.floor((sample + 1) * 128);
-            if (sample > 255) {
-                sample = 255;
-            } else if (sample < 0) {
-                sample = 0;
-            }
+            if (sample > 255) sample = 255;
+            if (sample < 0) sample = 0;
             buffer.push(sample);
         } else {
             // Rescale [-1.0, 1.0) to [-32768, 32768)
             sample = Math.floor(sample * (1 << 15));
-            if (sample >= (1 << 15)) {
-                sample = (1 << 15) - 1;
-            } else if (sample < -(1 << 15)) {
-                sample = -(1 << 15);
-            }
+            if (sample > (1 << 15) - 1) sample = (1 << 15) - 1;
+            if (sample < -(1 << 15)) sample = -(1 << 15);
             buffer.push(sample & 0xFF);
             buffer.push((sample >> 8) & 0xFF);
         }
