@@ -646,9 +646,30 @@ function Params() {
 }
 
 function synthesize(ps) {
+    // Repetition
+    //
+    // Some variables are "repeatable": if ps.p_repeat_speed is nonzero, they
+    // will be reset to their original values, all at once, right in the middle
+    // of the noise.
+
+    // The repeat clock
+    var rep_limit = Math.floor(Math.pow(1.0 - ps.p_repeat_speed, 2.0) * 20000 + 32);
+    if (ps.p_repeat_speed == 0.0) {
+        rep_limit = 0;
+    }
+    var rep_time;
+
+    // Repeatable variables
+    var fperiod, period, fmaxperiod;
+    var fslide, fdslide;
+    var square_duty, square_slide;
+    var arp_mod, arp_time, arp_limit;
+
     function repeat() {
+        // Reset the repeat clock.
         rep_time = 0;
 
+        // Reset all repeatable variables.
         fperiod = 100.0 / (ps.p_base_freq * ps.p_base_freq + 0.001);
         period = Math.floor(fperiod);
         fmaxperiod = 100.0 / (ps.p_freq_limit * ps.p_freq_limit + 0.001);
@@ -669,13 +690,8 @@ function synthesize(ps) {
         if (ps.p_arp_speed == 1.0) {
             arp_limit = 0;
         }
-    };
+    }
 
-    var rep_time;
-    var fperiod, period, fmaxperiod;
-    var fslide, fdslide;
-    var square_duty, square_slide;
-    var arp_mod, arp_time, arp_limit;
     repeat();  // First time through, this is a bit of a misnomer
 
     // Filter
@@ -726,16 +742,7 @@ function synthesize(ps) {
         noise_buffer[i] = Math.random() * 2.0 - 1.0;
     }
 
-    // Repeat
-    var rep_limit =
-        Math.floor(Math.pow(1.0 - ps.p_repeat_speed, 2.0) * 20000 + 32);
-    if (ps.p_repeat_speed == 0.0) {
-        rep_limit = 0;
-    }
-
-    //var gain = 2.0 * Math.log(1 + (Math.E - 1) * ps.sound_vol);
-    var gain = 2.0 * ps.sound_vol;
-    var gain = Math.exp(ps.sound_vol) - 1;
+    var gain = Math.exp(ps.sound_vol) - 1;  // constant
 
     // ...end of initialization. Generate samples.
 
@@ -746,7 +753,6 @@ function synthesize(ps) {
     var summands = Math.floor(44100 / ps.sample_rate);
 
     for (var t = 0;; ++t) {
-
         // Repeats
         if (rep_limit != 0 && ++rep_time >= rep_limit) {
             repeat();
