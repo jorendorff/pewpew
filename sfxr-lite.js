@@ -18,24 +18,12 @@
  */
 
 
+
+// === RC4 - An implementation of the ubiquitous stream cipher
+// Note: Don't use this for security. RC4 is very broken.
 
-// RNG | rngToParams | synthesize | samplesToWaveFormat | waveFormatToDataURL | playDataURL
-
-function play(seed) {
-    var rng = new RNG((seed / 100) | 0);
-    var params = rngToParams(seed, rng);
-    var samples = synthesize(params);
-    var wave = samplesToWaveFormat(params.sample_rate, params.sample_size, samples);
-    var dataURL = waveFormatToDataURL(wave);
-    playDataURL(dataURL);
-}
-
-
-
-// === RNG - a pseudorandom number generator
-
-/* new ARC4(key) - Create a new ARC4 stream. key is any string. */
-function ARC4(key) {
+// new RC4(key) - Create a new RC4 stream. key is any string.
+function RC4(key) {
     this.i = 0;
     this.j = 0;
     this.s = [];
@@ -43,7 +31,7 @@ function ARC4(key) {
         this.s[i] = i;
     }
 
-    // Mix entropy from the key string into the array s.
+    // Shuffle the array s using entropy from the key string.
     var j = 0;
     for (var i = 0; i < 256; i++) {
         j += this.s[i] + key.charCodeAt(i % key.length);
@@ -52,38 +40,45 @@ function ARC4(key) {
     }
 }
 
-ARC4.prototype._swap = function(i, j) {
+RC4.prototype._swap = function(i, j) {
     var tmp = this.s[i];
     this.s[i] = this.s[j];
     this.s[j] = tmp;
 };
 
-/* arc4.next() - Compute and return the next byte of this ARC4 stream. */
-ARC4.prototype.next = function() {
+// rc4.next() - Return the next byte of the cipher stream.
+RC4.prototype.next = function() {
     this.i = (this.i + 1) % 256;
     this.j = (this.j + this.s[this.i]) % 256;
     this._swap(this.i, this.j);
     return this.s[(this.s[this.i] + this.s[this.j]) % 256];
 };
 
-/* new RNG(seed) - Create a pseudorandom number generator. */
-function RNG(seed) {
-    var key = JSON.stringify(seed);
-    this._state = new ARC4(key);
+
+
+// === RNG - produce psuedorandom floating-point values from a byte stream
+
+// new RNG(stream) - Create a pseudorandom number generator.
+// stream is a byte stream, any object whose .next() method
+// returns an integer 0-255.
+function RNG(stream) {
+    this._stream = stream;
 }
 
-/* rng.uniform() - Return a uniformly-distributed random number in the range [0, 1]. */
+// rng.uniform() - Return a uniformly-distributed random number
+// in the range [0, 1].
 RNG.prototype.uniform = function() {
     var BYTES = 7; // 56 bits to make a 53-bit double
     var output = 0;
     for (var i = 0; i < BYTES; i++) {
-        output = 256 * output + this._state.next();
+        output = 256 * output + this._stream.next();
     }
     return output / (Math.pow(2, BYTES * 8) - 1);
 };
 
 
-// === rngToParams
+
+// === rngToParams - Produce a random Params object.
 
 var SQUARE = 0;
 var SAWTOOTH = 1;
@@ -92,6 +87,8 @@ var NOISE = 3;
 var TRIANGLE = 4;
 var BREAKER = 5;
 
+var NUM_SHAPES = 6;
+
 // Playback volume
 var masterVolume = 1.0;
 
@@ -99,10 +96,6 @@ function rngToParams(seed, rng) {
     var SOUND_VOL = 0.25;
     var SAMPLE_RATE = 5512;//44100;
     var SAMPLE_SIZE = 8;
-
-    var SHAPES = [
-        'square', 'sawtooth', 'sine', 'noise', 'triangle', 'breaker'
-    ];
 
     function frnd(range) {
         return rng.uniform() * range;
@@ -116,9 +109,9 @@ function rngToParams(seed, rng) {
 
     pickupCoin = function() {
         var result = Params();
-        result.wave_type = Math.floor(frnd(SHAPES.length));
-        if (result.wave_type === 3) {
-            result.wave_type = 0;
+        result.wave_type = Math.floor(frnd(NUM_SHAPES));
+        if (result.wave_type === NOISE) {
+            result.wave_type = SQUARE;
         }
         result.p_base_freq = 0.4 + frnd(0.5);
         result.p_env_attack = 0.0;
@@ -136,11 +129,10 @@ function rngToParams(seed, rng) {
 
     laserShoot = function() {
         var result = Params();
-        result.wave_type = rnd(2);
-        if (result.wave_type === SINE && rnd(1)) {
-            result.wave_type = rnd(1);
+        if (rnd(2) === 2 && rnd(1)) {
+            rnd(1);
         }
-        result.wave_type = Math.floor(frnd(SHAPES.length));
+        result.wave_type = Math.floor(frnd(NUM_SHAPES));
 
         if (result.wave_type === 3) {
             result.wave_type = SQUARE;
@@ -222,7 +214,7 @@ function rngToParams(seed, rng) {
         var result = Params();
 
         if (frnd(10) < 1) {
-            result.wave_type = Math.floor(frnd(SHAPES.length));
+            result.wave_type = Math.floor(frnd(NUM_SHAPES));
             if (result.wave_type === 3) {
                 result.wave_type = SQUARE;
             }
@@ -255,7 +247,7 @@ function rngToParams(seed, rng) {
         }
 
         if (frnd(10) < 1) {
-            result.wave_type = Math.floor(frnd(SHAPES.length));
+            result.wave_type = Math.floor(frnd(NUM_SHAPES));
             if (result.wave_type === 3) {
                 result.wave_type = SQUARE;
             }
@@ -285,7 +277,7 @@ function rngToParams(seed, rng) {
 
         }
         if (frnd(10) < 1) {
-            result.wave_type = Math.floor(frnd(SHAPES.length));
+            result.wave_type = Math.floor(frnd(NUM_SHAPES));
 
             if (result.wave_type === 3) {
                 result.wave_type = SQUARE;
@@ -315,7 +307,7 @@ function rngToParams(seed, rng) {
             return result;
         }
         if (frnd(5) > 1) {
-            result.wave_type = Math.floor(frnd(SHAPES.length));
+            result.wave_type = Math.floor(frnd(NUM_SHAPES));
 
             if (result.wave_type === 3) {
                 result.wave_type = SQUARE;
@@ -371,7 +363,7 @@ function rngToParams(seed, rng) {
 
         }
 
-        result.wave_type = Math.floor(frnd(SHAPES.length));
+        result.wave_type = Math.floor(frnd(NUM_SHAPES));
         if (result.wave_type === 1 || result.wave_type === 3) {
             result.wave_type = 2;
         }
@@ -409,7 +401,7 @@ function rngToParams(seed, rng) {
 
     pushSound = function() {
         var result = Params();
-        result.wave_type = Math.floor(frnd(SHAPES.length));
+        result.wave_type = Math.floor(frnd(NUM_SHAPES));
         if (result.wave_type === 2) {
             result.wave_type++;
         }
@@ -440,7 +432,7 @@ function rngToParams(seed, rng) {
         } else {
             result.p_duty = frnd(0.6);
         }
-        result.wave_type = Math.floor(frnd(SHAPES.length));
+        result.wave_type = Math.floor(frnd(NUM_SHAPES));
         if (result.wave_type === 3) {
             result.wave_type = SQUARE;
         }
@@ -472,7 +464,7 @@ function rngToParams(seed, rng) {
         if (result.wave_type === SQUARE) {
             result.p_duty = frnd(0.6);
         }
-        result.wave_type = Math.floor(frnd(SHAPES.length));
+        result.wave_type = Math.floor(frnd(NUM_SHAPES));
         result.p_base_freq = 0.2 + frnd(0.6);
         result.p_freq_ramp = -0.3 - frnd(0.4);
         result.p_env_attack = 0.0;
@@ -487,7 +479,7 @@ function rngToParams(seed, rng) {
     jump = function() {
         result = Params();
         result.wave_type = SQUARE;
-        result.wave_type = Math.floor(frnd(SHAPES.length));
+        result.wave_type = Math.floor(frnd(NUM_SHAPES));
         if (result.wave_type === 3) {
             result.wave_type = SQUARE;
         }
@@ -509,7 +501,7 @@ function rngToParams(seed, rng) {
     blipSelect = function() {
         result = Params();
         result.wave_type = rnd(1);
-        result.wave_type = Math.floor(frnd(SHAPES.length));
+        result.wave_type = Math.floor(frnd(NUM_SHAPES));
         if (result.wave_type === 3) {
             result.wave_type = rnd(1);
         }
@@ -526,7 +518,7 @@ function rngToParams(seed, rng) {
 
     random = function() {
         result = Params();
-        result.wave_type = Math.floor(frnd(SHAPES.length));
+        result.wave_type = Math.floor(frnd(NUM_SHAPES));
         result.p_base_freq = Math.pow(frnd(2.0) - 1.0, 2.0);
         if (rnd(1)) {
             result.p_base_freq = Math.pow(frnd(2.0) - 1.0, 3.0) + 0.5;
@@ -591,8 +583,8 @@ function rngToParams(seed, rng) {
 }
 
 
-
-// === synthesize: From parameters to samples
+
+// === synthesize - Given a Params object, produce sampled audio.
 
 // Sound generation parameters are on [0,1] unless noted SIGNED, & thus [-1,1]
 function Params() {
@@ -819,17 +811,19 @@ function synthesize(ps) {
         // 8x supersampling
         var sample = 0.0;
         var SUPERSAMPLES = 8;
-        for (var si = 0; si < SUPERSAMPLES; ++si) {
-            var sub_sample = 0.0;
-            phase++;
-            if (phase >= period) {
-                phase %= period;
-                if (ps.wave_type === NOISE) {
-                    for (var i = 0; i < 32; ++i) {
-                        noise_buffer[i] = Math.random() * 2.0 - 1.0;
-                    }
+
+        phase += SUPERSAMPLES;
+        if (phase >= period) {
+            phase %= period;
+            if (ps.wave_type === NOISE) {
+                for (var i = 0; i < 32; ++i) {
+                    noise_buffer[i] = Math.random() * 2.0 - 1.0;
                 }
             }
+        }
+
+        for (var si = 0; si < SUPERSAMPLES; ++si) {
+            var sub_sample = 0.0;
 
             // Base waveform
             var fp = phase / period;
@@ -914,8 +908,8 @@ function synthesize(ps) {
 }
 
 
-
-// === samplesToWaveFormat
+
+// === samplesToWaveFormat - Wrap audio sample data to make a WAV file.
 
 function u32ToArray(i) {
     return [i & 0xFF,
@@ -955,25 +949,25 @@ function samplesToWaveFormat(sampleRate, bitsPerSample, data) {
 }
 
 
+
+// === waveFormatToDataURL - Convert an array of bytes to a data: URL.
 
-// === waveFormatToDataURL
-
-var FastBase64_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-var FastBase64_encLookup = [];
+var Base64_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+var Base64_encLookup = [];
 
 (function () {
     for (var i = 0; i < 4096; i++) {
-        FastBase64_encLookup[i] = FastBase64_chars[i >> 6] + FastBase64_chars[i & 0x3F];
+        Base64_encLookup[i] = Base64_chars[i >> 6] + Base64_chars[i & 0x3F];
     }
 })();
 
-function FastBase64_Encode(src) {
+function Base64_Encode(src) {
     var len = src.length;
     var dst = '';
     var i = 0;
     while (len > 2) {
         n = (src[i] << 16) | (src[i + 1] << 8) | src[i + 2];
-        dst += FastBase64_encLookup[n >> 12] + FastBase64_encLookup[n & 0xFFF];
+        dst += Base64_encLookup[n >> 12] + Base64_encLookup[n & 0xFFF];
         len -= 3;
         i += 3;
     }
@@ -983,12 +977,12 @@ function FastBase64_Encode(src) {
         if (len > 1) {
             n2 |= (src[++i] & 0xF0) >> 4;
         }
-        dst += FastBase64_chars[n1];
-        dst += FastBase64_chars[n2];
+        dst += Base64_chars[n1];
+        dst += Base64_chars[n2];
         if (len == 2) {
             var n3 = (src[i++] & 0x0F) << 2;
             n3 |= (src[i] & 0xC0) >> 6;
-            dst += FastBase64_chars[n3];
+            dst += Base64_chars[n3];
         }
         if (len == 1) {
             dst += '=';
@@ -999,15 +993,32 @@ function FastBase64_Encode(src) {
 }
 
 function waveFormatToDataURL(wave) {
-    return 'data:audio/wav;base64,' + FastBase64_Encode(wave);
+    return 'data:audio/wav;base64,' + Base64_Encode(wave);
 }
 
 
-
-// === playDataURL
+
+// === playDataURL - Actually play a sound in the browser.
 
 function playDataURL(dataURL) {
     var audio = new Audio();
     audio.src = dataURL;
     audio.play();
+}
+
+
+
+// === play - Tie together all the pieces.
+// play is the composition of seven functions. If you think of it as a bash pipeline:
+// RC4 $SEED | RNG | rngToParams | synthesize | samplesToWaveFormat | waveFormatToDataURL | playDataURL
+
+function play(seed) {
+    var key = String((seed / 100) | 0);
+    var stream = new RC4(key);
+    var rng = new RNG(stream);
+    var params = rngToParams(seed, rng);
+    var samples = synthesize(params);
+    var wave = samplesToWaveFormat(params.sample_rate, params.sample_size, samples);
+    var dataURL = waveFormatToDataURL(wave);
+    playDataURL(dataURL);
 }
