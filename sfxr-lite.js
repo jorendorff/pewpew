@@ -734,11 +734,17 @@ function synthesize(ps) {
 
     // ...end of initialization. Generate samples.
 
-    var buffer = [];
-
     var sample_sum = 0;
     var num_summed = 0;
     var summands = Math.floor(44100 / ps.sample_rate);
+
+    var max_samples =
+        Math.floor((env_length[0] + env_length[1] + env_length[2] + 3) / summands);
+
+    var buffer = (ps.sample_size === 8)
+                 ? new Uint8ClampedArray(max_samples)
+                 : new Int16Array(max_samples);
+    var write_index = 0;
 
     for (var t = 0;; ++t) {
         // Repeats
@@ -758,6 +764,7 @@ function synthesize(ps) {
         if (fperiod > fmaxperiod) {
             fperiod = fmaxperiod;
             if (ps.p_freq_limit > 0.0) {
+                buffer = buffer.subarray(0, write_index);
                 break;
             }
         }
@@ -783,6 +790,8 @@ function synthesize(ps) {
             env_time = 0;
             env_stage++;
             if (env_stage === 3) {
+                if (write_index != buffer.length)
+                    throw new Error("oops, expected " + buffer.length + " got " + write_index);
                 break;
             }
         }
@@ -888,15 +897,13 @@ function synthesize(ps) {
             sample = Math.floor((sample + 1) * 128);
             if (sample > 255) sample = 255;
             else if (sample < 0) sample = 0;
-            buffer.push(sample);
         } else {
             // Rescale [-1.0, 1.0) to [-32768, 32768)
             sample = Math.floor(sample * (1 << 15));
             if (sample > (1 << 15) - 1) sample = (1 << 15) - 1;
             else if (sample < -(1 << 15)) sample = -(1 << 15);
-            buffer.push(sample & 0xFF);
-            buffer.push((sample >> 8) & 0xFF);
         }
+        buffer[write_index++] = sample;
     }
 
     return buffer;
@@ -922,8 +929,10 @@ function samplesToWaveFormat(sampleRate, bitsPerSample, data) {
     var numChannels = 1;
     var byteRate = (sampleRate * numChannels * bitsPerSample) >> 3;
     var blockAlign = (numChannels * bitsPerSample) >> 3;
+    var sampleBytes = data.length * Math.ceil(bitsPerSample / 8);
 
-    return [].concat(                           // OFFS SIZE NOTES
+    // Start with headers.
+    var wav = [].concat(                           // OFFS SIZE NOTES
         [0x52, 0x49, 0x46, 0x46],               // 0    4    "RIFF" = 0x52494646
         u32ToArray(36 + data.length),           // 4    4    chunk size = 4+(8+SubChunk1Size)+(8+SubChunk2Size)
         [0x57, 0x41, 0x56, 0x45],               // 8    4    "WAVE" = 0x57415645
@@ -938,9 +947,21 @@ function samplesToWaveFormat(sampleRate, bitsPerSample, data) {
         u16ToArray(bitsPerSample),              // 34   2    8 bits = 8, 16 bits = 16, etc.
         // subchunk 2
         [0x64, 0x61, 0x74, 0x61],               // 36   4    subchunk id: "data" = 0x64617461
-        u32ToArray(data.length),                // 40   4    subchunk length = NumSamples*NumChannels*BitsPerSample/8
-        data
+        u32ToArray(sampleBytes)                 // 40   4    subchunk length = NumSamples*NumChannels*BitsPerSample/8
     );
+
+    // Append sample data.
+    if (bitsPerSample === 8) {
+        for (var i = 0; i < data.length; i++)
+            wav.push(data[i]);
+    } else {
+        for (var i = 0; i < data.length; i++) {
+            var sample = data[i];
+            wav.push(sample & 0xFF);
+            wav.push((sample >> 8) & 0xFF);
+        }
+    }
+    return wav;
 }
 
 
