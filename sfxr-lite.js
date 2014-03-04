@@ -80,18 +80,6 @@ RNG.prototype.uniform = function() {
 
 // === rngToParams - Produce a random Params object.
 
-var SQUARE = 0;
-var SAWTOOTH = 1;
-var SINE = 2;
-var NOISE = 3;
-var TRIANGLE = 4;
-var BREAKER = 5;
-
-var NUM_SHAPES = 6;
-
-// Playback volume
-var masterVolume = 1.0;
-
 function rngToParams(seed, rng) {
     var SOUND_VOL = 0.25;
     var SAMPLE_RATE = 5512;//44100;
@@ -107,7 +95,7 @@ function rngToParams(seed, rng) {
 
     // Each of these functions returns a randomly populated Params object.
 
-    pickupCoin = function() {
+    function pickupCoin() {
         var result = Params();
         result.wave_type = Math.floor(frnd(NUM_SHAPES));
         if (result.wave_type === NOISE) {
@@ -125,9 +113,9 @@ function rngToParams(seed, rng) {
             result.p_arp_mod = (+num) / (+den);
         }
         return result;
-    };
+    }
 
-    laserShoot = function() {
+    function laserShoot() {
         var result = Params();
         if (rnd(2) === 2 && rnd(1)) {
             rnd(1);
@@ -171,9 +159,9 @@ function rngToParams(seed, rng) {
         }
 
         return result;
-    };
+    }
 
-    explosion = function() {
+    function explosion() {
         var result = Params();
 
         if (rnd(1)) {
@@ -208,9 +196,9 @@ function rngToParams(seed, rng) {
         }
 
         return result;
-    };
+    }
 
-    birdSound = function() {
+    function birdSound() {
         var result = Params();
 
         if (frnd(10) < 1) {
@@ -397,9 +385,9 @@ function rngToParams(seed, rng) {
         result.p_hpf_ramp = Math.pow(frnd(2.0) - 1.0, 5.0);
 
         return result;
-    };
+    }
 
-    pushSound = function() {
+    function pushSound() {
         var result = Params();
         result.wave_type = Math.floor(frnd(NUM_SHAPES));
         if (result.wave_type === 2) {
@@ -423,9 +411,9 @@ function rngToParams(seed, rng) {
         result.p_arp_mod = 0.8 - frnd(1.6);
 
         return result;
-    };
+    }
 
-    powerUp = function() {
+    function powerUp() {
         var result = Params();
         if (rnd(1)) {
             result.wave_type = SAWTOOTH;
@@ -453,9 +441,9 @@ function rngToParams(seed, rng) {
         result.p_env_decay = 0.1 + frnd(0.4);
 
         return result;
-    };
+    }
 
-    hitHurt = function() {
+    function hitHurt() {
         result = Params();
         result.wave_type = rnd(2);
         if (result.wave_type === SINE) {
@@ -474,9 +462,9 @@ function rngToParams(seed, rng) {
             result.p_hpf_freq = frnd(0.3);
         }
         return result;
-    };
+    }
 
-    jump = function() {
+    function jump() {
         result = Params();
         result.wave_type = SQUARE;
         result.wave_type = Math.floor(frnd(NUM_SHAPES));
@@ -496,9 +484,9 @@ function rngToParams(seed, rng) {
             result.p_lpf_freq = 1.0 - frnd(0.6);
         }
         return result;
-    };
+    }
 
-    blipSelect = function() {
+    function blipSelect() {
         result = Params();
         result.wave_type = rnd(1);
         result.wave_type = Math.floor(frnd(NUM_SHAPES));
@@ -514,9 +502,9 @@ function rngToParams(seed, rng) {
         result.p_env_decay = frnd(0.2);
         result.p_hpf_freq = 0.1;
         return result;
-    };
+    }
 
-    random = function() {
+    function random() {
         result = Params();
         result.wave_type = Math.floor(frnd(NUM_SHAPES));
         result.p_base_freq = Math.pow(frnd(2.0) - 1.0, 2.0);
@@ -558,9 +546,10 @@ function rngToParams(seed, rng) {
         result.p_arp_speed = frnd(2.0) - 1.0;
         result.p_arp_mod = frnd(2.0) - 1.0;
         return result;
-    };
+    }
 
-    // Now we simply select one of those functions at random and call it.
+    // Now we simply select one of those functions, based on the last 2 digits
+    // of the seed, and call it.
     var generators = [
         pickupCoin,
         laserShoot,
@@ -574,17 +563,26 @@ function rngToParams(seed, rng) {
         birdSound
     ];
     var soundGenerator = generators[seed % 100 % generators.length];
-    var result = soundGenerator();
+    var params = soundGenerator();
 
-    result.sound_vol = SOUND_VOL;
-    result.sample_rate = SAMPLE_RATE;
-    result.sample_size = SAMPLE_SIZE;
-    return result;
+    params.sound_vol = SOUND_VOL;
+    params.sample_rate = SAMPLE_RATE;
+    params.sample_size = SAMPLE_SIZE;
+    return params;
 }
 
 
 
 // === synthesize - Given a Params object, produce sampled audio.
+
+var SQUARE = 0;
+var SAWTOOTH = 1;
+var SINE = 2;
+var NOISE = 3;
+var TRIANGLE = 4;
+var BREAKER = 5;
+
+var NUM_SHAPES = 6;
 
 // Sound generation parameters are on [0,1] unless noted SIGNED, & thus [-1,1]
 function Params() {
@@ -885,7 +883,6 @@ function synthesize(ps) {
             continue;
         }
 
-        sample *= masterVolume;
         sample *= gain;
 
         if (ps.sample_size === 8) {
@@ -933,14 +930,14 @@ function samplesToWaveFormat(sampleRate, bitsPerSample, data) {
         u32ToArray(36 + data.length),           // 4    4    chunk size = 4+(8+SubChunk1Size)+(8+SubChunk2Size)
         [0x57, 0x41, 0x56, 0x45],               // 8    4    "WAVE" = 0x57415645
         // subchunk 1
-        [0x66, 0x6d, 0x74, 0x20],               // 12   4    subchunk id: "fmt " = 0x666d7420
+        [0x66, 0x6D, 0x74, 0x20],               // 12   4    subchunk id: "fmt " = 0x666D7420
         u32ToArray(16),                         // 16   4    subchunk length: 16 bytes to follow
         u16ToArray(1),                          // 20   2    audio format: PCM = 1
         u16ToArray(numChannels),                // 22   2    number of channels: Mono = 1, Stereo = 2, etc.
         u32ToArray(sampleRate),                 // 24   4    SampleRate: 8000, 44100, etc
         u32ToArray(byteRate),                   // 28   4    SampleRate*NumChannels*BitsPerSample/8
         u16ToArray(blockAlign),                 // 32   2    NumChannels*BitsPerSample/8
-        u16ToArray(bitsPerSample),              // 34   2    bitsPerSample: 8 bits = 8, 16 bits = 16, etc.
+        u16ToArray(bitsPerSample),              // 34   2    8 bits = 8, 16 bits = 16, etc.
         // subchunk 2
         [0x64, 0x61, 0x74, 0x61],               // 36   4    subchunk id: "data" = 0x64617461
         u32ToArray(data.length),                // 40   4    subchunk length = NumSamples*NumChannels*BitsPerSample/8
