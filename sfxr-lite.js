@@ -635,7 +635,7 @@ function Params() {
     };
 }
 
-function synthesize(ps) {
+function synthesize_main(ps) {
     // Repetition
     //
     // Some variables are "repeatable": if ps.p_repeat_speed is nonzero, they
@@ -741,9 +741,7 @@ function synthesize(ps) {
     var max_samples =
         Math.floor((env_length[0] + env_length[1] + env_length[2] + 3) / summands);
 
-    var buffer = (ps.sample_size === 8)
-                 ? new Uint8ClampedArray(max_samples)
-                 : new Int16Array(max_samples);
+    var buffer = new Float64Array(max_samples);
     var write_index = 0;
 
     for (var t = 0;; ++t) {
@@ -891,21 +889,40 @@ function synthesize(ps) {
         sample_sum = 0;
 
         sample *= gain;
-
-        if (ps.sample_size === 8) {
-            // Rescale [-1.0, 1.0) to [0, 256)
-            // Don't bother clamping since the Uint8ClampedArray does it for us
-            sample = Math.floor((sample + 1) * 128);
-         } else {
-            // Rescale [-1.0, 1.0) to [-32768, 32768) and clamp
-            sample = Math.floor(sample * (1 << 15));
-            if (sample > (1 << 15) - 1) sample = (1 << 15) - 1;
-            else if (sample < -(1 << 15)) sample = -(1 << 15);
-        }
         buffer[write_index++] = sample;
     }
 
     return buffer;
+}
+
+function digitize(samples_f64, bitsPerSample) {
+    var samples;
+
+    if (bitsPerSample === 8) {
+        samples = new Uint8ClampedArray(samples_f64.length);
+        for (var i = 0; i < samples_f64.length; i++) {
+            // Rescale [-1.0, 1.0) to [0, 256)
+            // Don't bother rounding or clamping
+            // since the Uint8ClampedArray does it for us.
+            samples[i] = (samples_f64[i] + 1) * 128;
+        }
+    } else {
+        samples = new Uint16Array(samples_f64.length);
+        for (var i = 0; i < samples_f64.length; i++) {
+            // Rescale [-1.0, 1.0) to [-32768, 32768) and clamp
+            var sample = Math.floor(samples_f64[i] * (1 << 15));
+            if (sample > (1 << 15) - 1) sample = (1 << 15) - 1;
+            else if (sample < -(1 << 15)) sample = -(1 << 15);
+            samples[i] = sample;
+        }
+    }
+
+    return samples;
+}
+
+function synthesize(params) {
+    var samples_f64 = synthesize_main(params);
+    return digitize(samples_f64, params.sample_size);
 }
 
 
