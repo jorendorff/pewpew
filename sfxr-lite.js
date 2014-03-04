@@ -894,11 +894,10 @@ function synthesize(ps) {
 
         if (ps.sample_size === 8) {
             // Rescale [-1.0, 1.0) to [0, 256)
+            // Don't bother clamping since the Uint8ClampedArray does it for us
             sample = Math.floor((sample + 1) * 128);
-            if (sample > 255) sample = 255;
-            else if (sample < 0) sample = 0;
-        } else {
-            // Rescale [-1.0, 1.0) to [-32768, 32768)
+         } else {
+            // Rescale [-1.0, 1.0) to [-32768, 32768) and clamp
             sample = Math.floor(sample * (1 << 15));
             if (sample > (1 << 15) - 1) sample = (1 << 15) - 1;
             else if (sample < -(1 << 15)) sample = -(1 << 15);
