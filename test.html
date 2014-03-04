@@ -3,10 +3,14 @@
   <head>
     <meta charset="utf-8">
     <script src="sfxr-lite.js"></script>
-    <!--script src="sfxr-minimal.js"></script-->
+    <script src="Chart.js"></script>
+    <script src="ui.js"></script>
   </head>
-  <body>
-    <input id="seed" value="8675309">
-    <button onclick="play(parseInt(document.getElementById('seed').value, 10))">push for noise</button>
+  <body onload="init_ui()">
+    <div>
+      <input id="seed" value="8675309">
+      <button id="play">push for noise</button>
+    </div>
+    <canvas id="graph" width="600" height="400" />
   </body>
 </html>
