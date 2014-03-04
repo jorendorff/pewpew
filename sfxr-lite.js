@@ -810,18 +810,17 @@ function synthesize(ps) {
         var sample = 0.0;
         var SUPERSAMPLES = 8;
 
-        phase += SUPERSAMPLES;
-        if (phase >= period) {
-            phase %= period;
-            if (ps.wave_type === NOISE) {
-                for (var i = 0; i < 32; ++i) {
-                    noise_buffer[i] = Math.random() * 2.0 - 1.0;
-                }
-            }
-        }
-
         for (var si = 0; si < SUPERSAMPLES; ++si) {
             var sub_sample = 0.0;
+            phase++;
+            if (phase >= period) {
+                phase %= period;
+                if (ps.wave_type === NOISE) {
+                    for (var i = 0; i < 32; ++i) {
+                        noise_buffer[i] = Math.random() * 2.0 - 1.0;
+                    }
+                }
+            }
 
             // Base waveform
             var fp = phase / period;
