@@ -662,7 +662,7 @@ function synthesize_main(ps) {
     // Repeatable variables
     var fperiod, period, fmaxperiod;
     var fslide, fdslide;
-    var square_duty, square_slide;
+    var square_duty;
     var arp_mod, arp_time, arp_limit;
 
     function repeat() {
@@ -678,7 +678,6 @@ function synthesize_main(ps) {
         fdslide = -Math.pow(ps.p_freq_dramp, 3.0) * 0.000001;
 
         square_duty = 0.5 - ps.p_duty * 0.5;
-        square_slide = -ps.p_duty_ramp * 0.00005;
 
         if (ps.p_arp_mod >= 0.0) {
             arp_mod = 1.0 - Math.pow(ps.p_arp_mod, 2.0) * 0.9;
@@ -693,6 +692,9 @@ function synthesize_main(ps) {
     }
 
     repeat();  // First time through, this is a bit of a misnomer
+
+    // Square duty
+    var square_slide = -ps.p_duty_ramp * 0.00005 / SUPERSAMPLES;  // constant
 
     // Filter
     var fltp = 0.0;
@@ -772,10 +774,6 @@ function synthesize_main(ps) {
             period = 8;
         }
 
-        square_duty += square_slide;
-        if (square_duty < 0.0) square_duty = 0.0;
-        if (square_duty > 0.5) square_duty = 0.5;
-
         // Phaser step
         fphase += fdphase;
         iphase = Math.abs(Math.floor(fphase));
@@ -803,6 +801,10 @@ function synthesize_main(ps) {
             // Base waveform
             var fp = phase / period;
             if (ps.wave_type === SQUARE) {
+                square_duty += square_slide;
+                if (square_duty < 0.0) square_duty = 0.0;
+                if (square_duty > 0.5) square_duty = 0.5;
+
                 if (fp < square_duty) {
                     sub_sample = 0.5;
                 } else {
