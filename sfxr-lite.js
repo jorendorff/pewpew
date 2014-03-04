@@ -635,6 +635,16 @@ function Params() {
     };
 }
 
+var SUPERSAMPLES = 8;
+
+function env_lengths(ps) {
+    return [
+        SUPERSAMPLES * (Math.floor(ps.p_env_attack * ps.p_env_attack * 100000.0) + 1),
+        SUPERSAMPLES * (Math.floor(ps.p_env_sustain * ps.p_env_sustain * 100000.0) + 1),
+        SUPERSAMPLES * (Math.floor(ps.p_env_decay * ps.p_env_decay * 100000.0) + 1)
+    ];
+}
+
 function synthesize_main(ps) {
     // Repetition
     //
@@ -701,16 +711,6 @@ function synthesize_main(ps) {
     var vib_speed = Math.pow(ps.p_vib_speed, 2.0) * 0.01;  // constant
     var vib_amp = ps.p_vib_strength * 0.5;  // constant
 
-    // Envelope
-    var env_stage = 0;
-    var env_time = 0;
-    var SUPERSAMPLES = 8;
-    var env_length = [
-        SUPERSAMPLES * (Math.floor(ps.p_env_attack * ps.p_env_attack * 100000.0) + 1),
-        SUPERSAMPLES * (Math.floor(ps.p_env_sustain * ps.p_env_sustain * 100000.0) + 1),
-        SUPERSAMPLES * (Math.floor(ps.p_env_decay * ps.p_env_decay * 100000.0) + 1)
-    ];
-
     // Phaser
     var PHASER_SIZE = 1024, PHASER_MASK = PHASER_SIZE - 1;
     var phase = 0;
@@ -731,15 +731,14 @@ function synthesize_main(ps) {
         noise_buffer[i] = Math.random() * 2.0 - 1.0;
     }
 
-    var gain = Math.exp(ps.sound_vol) - 1;  // constant
-
     // ...end of initialization. Generate samples.
 
+    var env_length = env_lengths(ps);
     var max_samples = env_length[0] + env_length[1] + env_length[2];
     var buffer = new Float64Array(max_samples);
     var write_index = 0;
 
-    for (var t = 0;; ++t) {
+    for (var t = 0; write_index < max_samples; ++t) {
         // Repeats
         if (rep_limit != 0 && ++rep_time >= rep_limit) {
             repeat();
@@ -847,32 +846,45 @@ function synthesize_main(ps) {
             sub_sample += phaser_buffer[(ipp - iphase + PHASER_SIZE) & PHASER_MASK];
             ipp = (ipp + 1) & PHASER_MASK;
 
-            // final accumulation and envelope application
-            var env_vol;
-            if (env_stage === 0) {
-                env_vol = env_time / env_length[0];
-            } else if (env_stage === 1) {
-                env_vol = 1.0 + Math.pow(1.0 - env_time / env_length[1], 1.0) * 2.0 * ps.p_env_punch;
-            } else {  // env_stage == 2
-                env_vol = 1.0 - env_time / env_length[2];
-            }
-            buffer[write_index++] = sub_sample * env_vol * gain;
-
-            // Volume envelope
-            env_time++;
-            if (env_time >= env_length[env_stage]) {
-                env_time = 0;
-                env_stage++;
-                if (env_stage === 3) {
-                    if (write_index != buffer.length)
-                        throw new Error("oops, expected " + buffer.length + " got " + write_index);
-                    return buffer;
-                }
-            }
+            // write this sample to the buffer
+            buffer[write_index++] = sub_sample;
         }
     }
 
     return buffer;
+}
+
+function applyEnvelope(params, samples) {
+    var len = samples.length;
+    var out = new Float64Array(len);
+    var env_stage = 0;
+    var env_time = 0;
+    var env_length = env_lengths(params);
+    var gain = Math.exp(params.sound_vol) - 1;  // constant
+
+    for (var i = 0; i < len; i++) {
+        var env_vol;
+        if (env_stage === 0) {
+            env_vol = env_time / env_length[0];
+        } else if (env_stage === 1) {
+            env_vol = 1.0 + (1.0 - env_time / env_length[1]) * 2.0 * params.p_env_punch;
+        } else {  // env_stage == 2
+            env_vol = 1.0 - env_time / env_length[2];
+        }
+
+        out[i] = samples[i] * env_vol * gain;
+
+        // Volume envelope
+        env_time++;
+        if (env_time >= env_length[env_stage]) {
+            env_time = 0;
+            env_stage++;
+            if (env_stage === 3 && i + 1 !== len) {
+                throw new Error("oops, expected " + len + " got " + (i + 1));
+            }
+        }
+    }
+    return out;
 }
 
 // Reduce the size of samples by a factor of N by decreasing the sample rate.
@@ -919,7 +931,7 @@ function digitize(samples_f64, bitsPerSample) {
 
 function synthesize(params) {
     var samples_f64 = synthesize_main(params);
-    var SUPERSAMPLES = 8;
+    samples_f64 = applyEnvelope(params, samples_f64);
     samples_f64 = compress(samples_f64, SUPERSAMPLES * Math.floor(44100 / params.sample_rate));
     return digitize(samples_f64, params.sample_size);
 }
