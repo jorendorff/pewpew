@@ -693,8 +693,6 @@ function synthesize_main(ps) {
 
     repeat();  // First time through, this is a bit of a misnomer
 
-    var phase = 0;
-
     // Square duty
     var square_slide = -ps.p_duty_ramp * 0.00005 / SUPERSAMPLES;  // constant
 
@@ -702,12 +700,6 @@ function synthesize_main(ps) {
     var vib_phase = 0.0;
     var vib_speed = Math.pow(ps.p_vib_speed, 2.0) * 0.01;  // constant
     var vib_amp = ps.p_vib_strength * 0.5;  // constant
-
-    // Noise
-    var noise_buffer = [];
-    for (var i = 0; i < 32; ++i) {
-        noise_buffer[i] = Math.random() * 2.0 - 1.0;
-    }
 
     // ...end of initialization. Generate samples.
 
@@ -752,49 +744,68 @@ function synthesize_main(ps) {
 
         // 8x supersampling
         for (var si = 0; si < SUPERSAMPLES; ++si) {
-            var sub_sample = 0.0;
-            phase++;
-            if (phase >= period) {
-                phase %= period;
-                if (ps.wave_type === NOISE) {
-                    for (var i = 0; i < 32; ++i) {
-                        noise_buffer[i] = Math.random() * 2.0 - 1.0;
-                    }
-                }
-            }
-
-            // Base waveform
-            var fp = phase / period;
-            if (ps.wave_type === SQUARE) {
-                square_duty += square_slide;
-                if (square_duty < 0.0) square_duty = 0.0;
-                if (square_duty > 0.5) square_duty = 0.5;
-
-                if (fp < square_duty) {
-                    sub_sample = 0.5;
-                } else {
-                    sub_sample = -0.5;
-                }
-            } else if (ps.wave_type === SAWTOOTH) {
-                sub_sample = 1.0 - fp * 2;
-            } else if (ps.wave_type === SINE) {
-                sub_sample = Math.sin(fp * 2 * Math.PI);
-            } else if (ps.wave_type === NOISE) {
-                sub_sample = noise_buffer[Math.floor(phase * 32 / period)];
-            } else if (ps.wave_type === TRIANGLE) {
-                sub_sample = Math.abs(1 - fp * 2) - 1;
-            } else if (ps.wave_type === BREAKER) {
-                sub_sample = Math.abs(1 - fp * fp * 2) - 1;
-            } else {
-                throw new Exception('bad wave type! ' + ps.wave_type);
-            }
-
-            // write this sample to the buffer
-            buffer[write_index++] = sub_sample;
+            buffer[write_index++] = period;
         }
     }
 
     return buffer;
+}
+
+function applyBaseWaveform(params, wavelengthSamples) {
+    var type = params.wave_type;
+
+    // Noise
+    var noise_buffer = [];
+    for (var i = 0; i < 32; ++i) {
+        noise_buffer[i] = Math.random() * 2.0 - 1.0;
+    }
+
+    var len = wavelengthSamples.length;
+    var out = new Float64Array(len);
+    var phase = 0;
+    for (var i = 0; i < len; i++) {
+        var period = wavelengthSamples[i];
+
+        phase++;
+        if (phase >= period) {
+            phase %= period;
+            if (type === NOISE) {
+                for (var i = 0; i < 32; ++i) {
+                    noise_buffer[i] = Math.random() * 2.0 - 1.0;
+                }
+            }
+        }
+
+        // Base waveform
+        var sample;
+        var fp = phase / period;
+        if (type === SQUARE) {
+            square_duty += square_slide;
+            if (square_duty < 0.0) square_duty = 0.0;
+            if (square_duty > 0.5) square_duty = 0.5;
+
+            if (fp < square_duty) {
+                sample = 0.5;
+            } else {
+                sample = -0.5;
+            }
+        } else if (type === SAWTOOTH) {
+            sample = 1.0 - fp * 2;
+        } else if (type === SINE) {
+            sample = Math.sin(fp * 2 * Math.PI);
+        } else if (type === NOISE) {
+            sample = noise_buffer[Math.floor(phase * 32 / period)];
+        } else if (type === TRIANGLE) {
+            sample = Math.abs(1 - fp * 2) - 1;
+        } else if (type === BREAKER) {
+            sample = Math.abs(1 - fp * fp * 2) - 1;
+        } else {
+            throw new Exception('bad wave type! ' + type);
+        }
+
+        out[i] = sample;
+    }
+    return out;
 }
 
 function applyFilters(params, samples) {
@@ -950,6 +961,7 @@ function digitize(samples_f64, bitsPerSample) {
 
 function synthesize(params) {
     var samples_f64 = synthesize_main(params);
+    samples_f64 = applyBaseWaveform(params, samples_f64);
     samples_f64 = applyFilters(params, samples_f64);
     samples_f64 = applyPhaser(params, samples_f64);
     samples_f64 = applyEnvelope(params, samples_f64);
