@@ -693,39 +693,15 @@ function synthesize_main(ps) {
 
     repeat();  // First time through, this is a bit of a misnomer
 
+    var phase = 0;
+
     // Square duty
     var square_slide = -ps.p_duty_ramp * 0.00005 / SUPERSAMPLES;  // constant
-
-    // Filter
-    var fltp = 0.0;
-    var fltdp = 0.0;
-    var fltw = Math.pow(ps.p_lpf_freq, 3.0) * 0.1;
-    var fltw_d = 1.0 + ps.p_lpf_ramp * 0.0001;
-    var fltdmp =
-        5.0 / (1.0 + Math.pow(ps.p_lpf_resonance, 2.0) * 20.0) * (0.01 + fltw);
-    if (fltdmp > 0.8) fltdmp = 0.8;
-    var fltphp = 0.0;
-    var flthp = Math.pow(ps.p_hpf_freq, 2.0) * 0.1;  // function of t and flthp_d
-    var flthp_d = 1.0 + ps.p_hpf_ramp * 0.0003;  // constant
 
     // Vibrato
     var vib_phase = 0.0;
     var vib_speed = Math.pow(ps.p_vib_speed, 2.0) * 0.01;  // constant
     var vib_amp = ps.p_vib_strength * 0.5;  // constant
-
-    // Phaser
-    var PHASER_SIZE = 1024, PHASER_MASK = PHASER_SIZE - 1;
-    var phase = 0;
-    var fphase = Math.pow(ps.p_pha_offset, 2.0) * 1020.0;
-    if (ps.p_pha_offset < 0.0) fphase = -fphase;
-    var fdphase = Math.pow(ps.p_pha_ramp, 2.0) * 1.0;  // constant
-    if (ps.p_pha_ramp < 0.0) fdphase = -fdphase;
-    var iphase = Math.abs(Math.floor(fphase));
-    var ipp = 0;
-    var phaser_buffer = [];
-    for (var i = 0; i < PHASER_SIZE; ++i) {
-        phaser_buffer[i] = 0.0;
-    }
 
     // Noise
     var noise_buffer = [];
@@ -774,17 +750,6 @@ function synthesize_main(ps) {
             period = 8;
         }
 
-        // Phaser step
-        fphase += fdphase;
-        iphase = Math.abs(Math.floor(fphase));
-        if (iphase > PHASER_MASK) iphase = PHASER_MASK;
-
-        if (flthp_d != 0.0) {
-            flthp *= flthp_d;
-            if (flthp < 0.00001) flthp = 0.00001;
-            if (flthp > 0.1) flthp = 0.1;
-        }
-
         // 8x supersampling
         for (var si = 0; si < SUPERSAMPLES; ++si) {
             var sub_sample = 0.0;
@@ -824,36 +789,88 @@ function synthesize_main(ps) {
                 throw new Exception('bad wave type! ' + ps.wave_type);
             }
 
-            // Low-pass filter
-            var pp = fltp;
-            fltw *= fltw_d;
-            if (fltw < 0.0) fltw = 0.0;
-            if (fltw > 0.1) fltw = 0.1;
-            if (ps.p_lpf_freq != 1.0) {
-                fltdp += (sub_sample - fltp) * fltw;
-                fltdp -= fltdp * fltdmp;
-            } else {
-                fltp = sub_sample;
-                fltdp = 0.0;
-            }
-            fltp += fltdp;
-
-            // High-pass filter
-            fltphp += fltp - pp;
-            fltphp -= fltphp * flthp;
-            sub_sample = fltphp;
-
-            // Phaser
-            phaser_buffer[ipp & PHASER_MASK] = sub_sample;
-            sub_sample += phaser_buffer[(ipp - iphase + PHASER_SIZE) & PHASER_MASK];
-            ipp = (ipp + 1) & PHASER_MASK;
-
             // write this sample to the buffer
             buffer[write_index++] = sub_sample;
         }
     }
 
     return buffer;
+}
+
+function applyFilters(params, samples) {
+    var fltp = 0.0;
+    var fltdp = 0.0;
+    var fltw = Math.pow(params.p_lpf_freq, 3.0) * 0.1;
+    var fltw_d = 1.0 + params.p_lpf_ramp * 0.0001;
+    var fltdmp =
+        5.0 / (1.0 + Math.pow(params.p_lpf_resonance, 2.0) * 20.0) * (0.01 + fltw);
+    if (fltdmp > 0.8) fltdmp = 0.8;
+    var fltphp = 0.0;
+    var flthp = Math.pow(params.p_hpf_freq, 2.0) * 0.1;  // function of t and flthp_d
+    var flthp_d = Math.pow(1.0 + params.p_hpf_ramp * 0.0003, 1 / SUPERSAMPLES);  // constant
+
+    var len = samples.length;
+    var out = new Float64Array(len);
+    for (var i = 0; i < len; i++) {
+        var y = samples[i];
+
+        // Low-pass filter
+        var pp = fltp;
+        fltw *= fltw_d;
+        if (fltw < 0.0) fltw = 0.0;
+        if (fltw > 0.1) fltw = 0.1;
+        if (params.p_lpf_freq != 1.0) {
+            fltdp += (y - fltp) * fltw;
+            fltdp -= fltdp * fltdmp;
+        } else {
+            fltp = y;
+            fltdp = 0.0;
+        }
+        fltp += fltdp;
+
+        // High-pass filter
+        if (flthp_d !== 1.0) {
+            flthp *= flthp_d;
+            if (flthp < 0.00001) flthp = 0.00001;
+            if (flthp > 0.1) flthp = 0.1;
+        }
+        fltphp += fltp - pp;
+        fltphp -= fltphp * flthp;
+
+        out[i] = fltphp;
+    }
+    return out;
+}
+
+function applyPhaser(params, samples) {
+    var PHASER_SIZE = 1024, PHASER_MASK = PHASER_SIZE - 1;
+    var fphase = Math.pow(params.p_pha_offset, 2.0) * 1020.0;
+    if (params.p_pha_offset < 0.0) fphase = -fphase;
+
+    var fdphase = Math.pow(params.p_pha_ramp, 2.0) / SUPERSAMPLES;  // constant
+    if (params.p_pha_ramp < 0.0) fdphase = -fdphase;
+
+    var ipp = 0;
+    var phaser_buffer = new Float64Array(PHASER_SIZE);
+    for (var i = 0; i < PHASER_SIZE; ++i) {
+        phaser_buffer[i] = 0.0;
+    }
+
+    var len = samples.length;
+    var out = new Float64Array(len);
+    for (var i = 0; i < len; i++) {
+        var y = samples[i];
+        phaser_buffer[ipp & PHASER_MASK] = y;
+
+        fphase += fdphase;
+        var iphase = Math.abs(Math.floor(fphase));
+        if (iphase > PHASER_MASK) iphase = PHASER_MASK;
+        y += phaser_buffer[(ipp - iphase + PHASER_SIZE) & PHASER_MASK];
+        ipp = (ipp + 1) & PHASER_MASK;
+
+        out[i] = y;
+    }
+    return out;
 }
 
 function applyEnvelope(params, samples) {
@@ -933,6 +950,8 @@ function digitize(samples_f64, bitsPerSample) {
 
 function synthesize(params) {
     var samples_f64 = synthesize_main(params);
+    samples_f64 = applyFilters(params, samples_f64);
+    samples_f64 = applyPhaser(params, samples_f64);
     samples_f64 = applyEnvelope(params, samples_f64);
     samples_f64 = compress(samples_f64, SUPERSAMPLES * Math.floor(44100 / params.sample_rate));
     return digitize(samples_f64, params.sample_size);
