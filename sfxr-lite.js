@@ -734,8 +734,6 @@ function synthesize_main(ps) {
 
     // ...end of initialization. Generate samples.
 
-    var sample_sum = 0;
-    var num_summed = 0;
     var summands = Math.floor(44100 / ps.sample_rate);
 
     var max_samples =
@@ -745,151 +743,147 @@ function synthesize_main(ps) {
     var write_index = 0;
 
     for (var t = 0;; ++t) {
-        // Repeats
-        if (rep_limit != 0 && ++rep_time >= rep_limit) {
-            repeat();
-        }
-
-        // Arpeggio (single)
-        if (arp_limit != 0 && t >= arp_limit) {
-            arp_limit = 0;
-            fperiod *= arp_mod;
-        }
-
-        // Frequency slide, and frequency slide slide!
-        fslide += fdslide;
-        fperiod *= fslide;
-        if (fperiod > fmaxperiod) {
-            fperiod = fmaxperiod;
-            if (ps.p_freq_limit > 0.0) {
-                buffer = buffer.subarray(0, write_index);
-                break;
+        var sample_sum = 0;
+        for (var num_summed = 0; num_summed < summands; num_summed++) {
+            // Repeats
+            if (rep_limit != 0 && ++rep_time >= rep_limit) {
+                repeat();
             }
-        }
 
-        // Vibrato
-        var rfperiod = fperiod;
-        if (vib_amp > 0.0) {
-            vib_phase += vib_speed;
-            rfperiod = fperiod * (1.0 + Math.sin(vib_phase) * vib_amp);
-        }
-        period = Math.floor(rfperiod);
-        if (period < 8) {
-            period = 8;
-        }
-
-        square_duty += square_slide;
-        if (square_duty < 0.0) square_duty = 0.0;
-        if (square_duty > 0.5) square_duty = 0.5;
-
-        // Volume envelope
-        env_time++;
-        if (env_time > env_length[env_stage]) {
-            env_time = 0;
-            env_stage++;
-            if (env_stage === 3) {
-                if (write_index != buffer.length)
-                    throw new Error("oops, expected " + buffer.length + " got " + write_index);
-                break;
+            // Arpeggio (single)
+            if (arp_limit != 0 && t >= arp_limit) {
+                arp_limit = 0;
+                fperiod *= arp_mod;
             }
-        }
-        var env_vol;
-        if (env_stage === 0) {
-            env_vol = env_time / env_length[0];
-        } else if (env_stage === 1) {
-            env_vol = 1.0 + Math.pow(1.0 - env_time / env_length[1], 1.0) * 2.0 * ps.p_env_punch;
-        } else {  // env_stage == 2
-            env_vol = 1.0 - env_time / env_length[2];
-        }
 
-        // Phaser step
-        fphase += fdphase;
-        iphase = Math.abs(Math.floor(fphase));
-        if (iphase > PHASER_MASK) iphase = PHASER_MASK;
+            // Frequency slide, and frequency slide slide!
+            fslide += fdslide;
+            fperiod *= fslide;
+            if (fperiod > fmaxperiod) {
+                fperiod = fmaxperiod;
+                if (ps.p_freq_limit > 0.0) {
+                    buffer = buffer.subarray(0, write_index);
+                    return buffer;
+                }
+            }
 
-        if (flthp_d != 0.0) {
-            flthp *= flthp_d;
-            if (flthp < 0.00001) flthp = 0.00001;
-            if (flthp > 0.1) flthp = 0.1;
-        }
+            // Vibrato
+            var rfperiod = fperiod;
+            if (vib_amp > 0.0) {
+                vib_phase += vib_speed;
+                rfperiod = fperiod * (1.0 + Math.sin(vib_phase) * vib_amp);
+            }
+            period = Math.floor(rfperiod);
+            if (period < 8) {
+                period = 8;
+            }
 
-        // 8x supersampling
-        var sample = 0.0;
-        var SUPERSAMPLES = 8;
+            square_duty += square_slide;
+            if (square_duty < 0.0) square_duty = 0.0;
+            if (square_duty > 0.5) square_duty = 0.5;
 
-        for (var si = 0; si < SUPERSAMPLES; ++si) {
-            var sub_sample = 0.0;
-            phase++;
-            if (phase >= period) {
-                phase %= period;
-                if (ps.wave_type === NOISE) {
-                    for (var i = 0; i < 32; ++i) {
-                        noise_buffer[i] = Math.random() * 2.0 - 1.0;
+            // Volume envelope
+            env_time++;
+            if (env_time > env_length[env_stage]) {
+                env_time = 0;
+                env_stage++;
+                if (env_stage === 3) {
+                    if (write_index != buffer.length)
+                        throw new Error("oops, expected " + buffer.length + " got " + write_index);
+                    return buffer;
+                }
+            }
+            var env_vol;
+            if (env_stage === 0) {
+                env_vol = env_time / env_length[0];
+            } else if (env_stage === 1) {
+                env_vol = 1.0 + Math.pow(1.0 - env_time / env_length[1], 1.0) * 2.0 * ps.p_env_punch;
+            } else {  // env_stage == 2
+                env_vol = 1.0 - env_time / env_length[2];
+            }
+
+            // Phaser step
+            fphase += fdphase;
+            iphase = Math.abs(Math.floor(fphase));
+            if (iphase > PHASER_MASK) iphase = PHASER_MASK;
+
+            if (flthp_d != 0.0) {
+                flthp *= flthp_d;
+                if (flthp < 0.00001) flthp = 0.00001;
+                if (flthp > 0.1) flthp = 0.1;
+            }
+
+            // 8x supersampling
+            var sample = 0.0;
+            var SUPERSAMPLES = 8;
+
+            for (var si = 0; si < SUPERSAMPLES; ++si) {
+                var sub_sample = 0.0;
+                phase++;
+                if (phase >= period) {
+                    phase %= period;
+                    if (ps.wave_type === NOISE) {
+                        for (var i = 0; i < 32; ++i) {
+                            noise_buffer[i] = Math.random() * 2.0 - 1.0;
+                        }
                     }
                 }
-            }
 
-            // Base waveform
-            var fp = phase / period;
-            if (ps.wave_type === SQUARE) {
-                if (fp < square_duty) {
-                    sub_sample = 0.5;
+                // Base waveform
+                var fp = phase / period;
+                if (ps.wave_type === SQUARE) {
+                    if (fp < square_duty) {
+                        sub_sample = 0.5;
+                    } else {
+                        sub_sample = -0.5;
+                    }
+                } else if (ps.wave_type === SAWTOOTH) {
+                    sub_sample = 1.0 - fp * 2;
+                } else if (ps.wave_type === SINE) {
+                    sub_sample = Math.sin(fp * 2 * Math.PI);
+                } else if (ps.wave_type === NOISE) {
+                    sub_sample = noise_buffer[Math.floor(phase * 32 / period)];
+                } else if (ps.wave_type === TRIANGLE) {
+                    sub_sample = Math.abs(1 - fp * 2) - 1;
+                } else if (ps.wave_type === BREAKER) {
+                    sub_sample = Math.abs(1 - fp * fp * 2) - 1;
                 } else {
-                    sub_sample = -0.5;
+                    throw new Exception('bad wave type! ' + ps.wave_type);
                 }
-            } else if (ps.wave_type === SAWTOOTH) {
-                sub_sample = 1.0 - fp * 2;
-            } else if (ps.wave_type === SINE) {
-                sub_sample = Math.sin(fp * 2 * Math.PI);
-            } else if (ps.wave_type === NOISE) {
-                sub_sample = noise_buffer[Math.floor(phase * 32 / period)];
-            } else if (ps.wave_type === TRIANGLE) {
-                sub_sample = Math.abs(1 - fp * 2) - 1;
-            } else if (ps.wave_type === BREAKER) {
-                sub_sample = Math.abs(1 - fp * fp * 2) - 1;
-            } else {
-                throw new Exception('bad wave type! ' + ps.wave_type);
+
+                // Low-pass filter
+                var pp = fltp;
+                fltw *= fltw_d;
+                if (fltw < 0.0) fltw = 0.0;
+                if (fltw > 0.1) fltw = 0.1;
+                if (ps.p_lpf_freq != 1.0) {
+                    fltdp += (sub_sample - fltp) * fltw;
+                    fltdp -= fltdp * fltdmp;
+                } else {
+                    fltp = sub_sample;
+                    fltdp = 0.0;
+                }
+                fltp += fltdp;
+
+                // High-pass filter
+                fltphp += fltp - pp;
+                fltphp -= fltphp * flthp;
+                sub_sample = fltphp;
+
+                // Phaser
+                phaser_buffer[ipp & PHASER_MASK] = sub_sample;
+                sub_sample += phaser_buffer[(ipp - iphase + PHASER_SIZE) & PHASER_MASK];
+                ipp = (ipp + 1) & PHASER_MASK;
+
+                // final accumulation and envelope application
+                sample += sub_sample * env_vol;
             }
 
-            // Low-pass filter
-            var pp = fltp;
-            fltw *= fltw_d;
-            if (fltw < 0.0) fltw = 0.0;
-            if (fltw > 0.1) fltw = 0.1;
-            if (ps.p_lpf_freq != 1.0) {
-                fltdp += (sub_sample - fltp) * fltw;
-                fltdp -= fltdp * fltdmp;
-            } else {
-                fltp = sub_sample;
-                fltdp = 0.0;
-            }
-            fltp += fltdp;
-
-            // High-pass filter
-            fltphp += fltp - pp;
-            fltphp -= fltphp * flthp;
-            sub_sample = fltphp;
-
-            // Phaser
-            phaser_buffer[ipp & PHASER_MASK] = sub_sample;
-            sub_sample += phaser_buffer[(ipp - iphase + PHASER_SIZE) & PHASER_MASK];
-            ipp = (ipp + 1) & PHASER_MASK;
-
-            // final accumulation and envelope application
-            sample += sub_sample * env_vol;
+            // Accumulate samples. Later we'll divide by summands.
+            sample_sum += sample;
         }
 
-        // Accumulate samples appropriately for sample rate
-        sample_sum += sample / SUPERSAMPLES;
-        if (++num_summed < summands)
-            continue;
-
-        num_summed = 0;
-        sample = sample_sum / summands;
-        sample_sum = 0;
-
-        sample *= gain;
-        buffer[write_index++] = sample;
+        buffer[write_index++] = sample_sum * (gain / SUPERSAMPLES / summands);
     }
 
     return buffer;
