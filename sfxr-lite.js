@@ -704,10 +704,11 @@ function synthesize_main(ps) {
     // Envelope
     var env_stage = 0;
     var env_time = 0;
+    var SUPERSAMPLES = 8;
     var env_length = [
-        Math.floor(ps.p_env_attack * ps.p_env_attack * 100000.0),
-        Math.floor(ps.p_env_sustain * ps.p_env_sustain * 100000.0),
-        Math.floor(ps.p_env_decay * ps.p_env_decay * 100000.0)
+        SUPERSAMPLES * (Math.floor(ps.p_env_attack * ps.p_env_attack * 100000.0) + 1),
+        SUPERSAMPLES * (Math.floor(ps.p_env_sustain * ps.p_env_sustain * 100000.0) + 1),
+        SUPERSAMPLES * (Math.floor(ps.p_env_decay * ps.p_env_decay * 100000.0) + 1)
     ];
 
     // Phaser
@@ -734,8 +735,7 @@ function synthesize_main(ps) {
 
     // ...end of initialization. Generate samples.
 
-    var SUPERSAMPLES = 8;
-    var max_samples = (env_length[0] + env_length[1] + env_length[2] + 2) * SUPERSAMPLES;
+    var max_samples = env_length[0] + env_length[1] + env_length[2];
     var buffer = new Float64Array(max_samples);
     var write_index = 0;
 
@@ -776,26 +776,6 @@ function synthesize_main(ps) {
         square_duty += square_slide;
         if (square_duty < 0.0) square_duty = 0.0;
         if (square_duty > 0.5) square_duty = 0.5;
-
-        // Volume envelope
-        env_time++;
-        if (env_time > env_length[env_stage]) {
-            env_time = 0;
-            env_stage++;
-            if (env_stage === 3) {
-                if (write_index != buffer.length)
-                    throw new Error("oops, expected " + buffer.length + " got " + write_index);
-                return buffer;
-            }
-        }
-        var env_vol;
-        if (env_stage === 0) {
-            env_vol = env_time / env_length[0];
-        } else if (env_stage === 1) {
-            env_vol = 1.0 + Math.pow(1.0 - env_time / env_length[1], 1.0) * 2.0 * ps.p_env_punch;
-        } else {  // env_stage == 2
-            env_vol = 1.0 - env_time / env_length[2];
-        }
 
         // Phaser step
         fphase += fdphase;
@@ -868,7 +848,27 @@ function synthesize_main(ps) {
             ipp = (ipp + 1) & PHASER_MASK;
 
             // final accumulation and envelope application
+            var env_vol;
+            if (env_stage === 0) {
+                env_vol = env_time / env_length[0];
+            } else if (env_stage === 1) {
+                env_vol = 1.0 + Math.pow(1.0 - env_time / env_length[1], 1.0) * 2.0 * ps.p_env_punch;
+            } else {  // env_stage == 2
+                env_vol = 1.0 - env_time / env_length[2];
+            }
             buffer[write_index++] = sub_sample * env_vol * gain;
+
+            // Volume envelope
+            env_time++;
+            if (env_time >= env_length[env_stage]) {
+                env_time = 0;
+                env_stage++;
+                if (env_stage === 3) {
+                    if (write_index != buffer.length)
+                        throw new Error("oops, expected " + buffer.length + " got " + write_index);
+                    return buffer;
+                }
+            }
         }
     }
 
