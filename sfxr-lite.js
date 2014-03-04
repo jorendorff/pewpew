@@ -734,7 +734,8 @@ function synthesize_main(ps) {
 
     // ...end of initialization. Generate samples.
 
-    var max_samples = env_length[0] + env_length[1] + env_length[2] + 2;
+    var SUPERSAMPLES = 8;
+    var max_samples = (env_length[0] + env_length[1] + env_length[2] + 2) * SUPERSAMPLES;
     var buffer = new Float64Array(max_samples);
     var write_index = 0;
 
@@ -808,9 +809,6 @@ function synthesize_main(ps) {
         }
 
         // 8x supersampling
-        var sample = 0.0;
-        var SUPERSAMPLES = 8;
-
         for (var si = 0; si < SUPERSAMPLES; ++si) {
             var sub_sample = 0.0;
             phase++;
@@ -870,10 +868,8 @@ function synthesize_main(ps) {
             ipp = (ipp + 1) & PHASER_MASK;
 
             // final accumulation and envelope application
-            sample += sub_sample * env_vol;
+            buffer[write_index++] = sub_sample * env_vol * gain;
         }
-
-        buffer[write_index++] = sample * (gain / SUPERSAMPLES);
     }
 
     return buffer;
@@ -923,7 +919,8 @@ function digitize(samples_f64, bitsPerSample) {
 
 function synthesize(params) {
     var samples_f64 = synthesize_main(params);
-    samples_f64 = compress(samples_f64, Math.floor(44100 / params.sample_rate));
+    var SUPERSAMPLES = 8;
+    samples_f64 = compress(samples_f64, SUPERSAMPLES * Math.floor(44100 / params.sample_rate));
     return digitize(samples_f64, params.sample_size);
 }
 
