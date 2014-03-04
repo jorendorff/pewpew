@@ -875,13 +875,12 @@ function synthesize(ps) {
 
         // Accumulate samples appropriately for sample rate
         sample_sum += sample / SUPERSAMPLES;
-        if (++num_summed >= summands) {
-            num_summed = 0;
-            sample = sample_sum / summands;
-            sample_sum = 0;
-        } else {
+        if (++num_summed < summands)
             continue;
-        }
+
+        num_summed = 0;
+        sample = sample_sum / summands;
+        sample_sum = 0;
 
         sample *= gain;
 
