@@ -646,23 +646,17 @@ function env_lengths(ps) {
 }
 
 function computePeriodSamples(ps) {
-    // Repetition
-    //
-    // Some variables are "repeatable": if ps.p_repeat_speed is nonzero, they
-    // will be reset to their original values, all at once, right in the middle
-    // of the noise.
+    // If ps.p_repeat_speed is nonzero, the frequency will reset periodically
+    // during the sound.
 
-    // The repeat clock
-    var rep_limit = (ps.p_repeat_speed == 0.0)
-                    ? 0
-                    : Math.floor(Math.pow(1.0 - ps.p_repeat_speed, 2.0) * 20000 + 32);
+    var rep_period = (ps.p_repeat_speed == 0.0)
+                     ? 0
+                     : Math.floor(Math.pow(1.0 - ps.p_repeat_speed, 2.0) * 20000 + 32);
     var rep_time;
-
-    // Repeatable variables
-    var fperiod, fslide;
+    var fperiod, fslide; // variables that reset
 
     function repeat() {
-        // Reset the repeat clock.
+        // Reset the clock.
         rep_time = 0;
 
         // Reset all repeatable variables.
@@ -686,7 +680,7 @@ function computePeriodSamples(ps) {
 
     for (var t = 0; write_index < max_samples; ++t) {
         // Repeats
-        if (rep_limit != 0 && ++rep_time >= rep_limit) {
+        if (rep_period != 0 && ++rep_time >= rep_period) {
             repeat();
         }
 
@@ -700,25 +694,26 @@ function computePeriodSamples(ps) {
             }
         }
 
-        buffer[write_index++] = fperiod * arp_mod;
+        buffer[write_index++] = fperiod;
     }
 
     return buffer;
 }
 
 // In sythesizers, "arpeggio" means an abrupt change in frequency during a
-// sound. This synthesizer only supports a single change.
+// sound. This synthesizer only supports a single cutoff point.
 function applyArpeggio(params, periodSamples) {
     var len = periodSamples.length;
-    var arp_time = Math.floor(Math.pow(1.0 - ps.p_arp_speed, 2.0) * 20000 + 32);
+    var arp_time = Math.floor(Math.pow(1.0 - params.p_arp_speed, 2.0) * 20000 + 32);
     if (params.p_arp_mod === 0.0 || arp_time >= len) {
-        // No arpeggio.
+        // No arpeggio. The algorithm below will produce an exact copy
+        // of the input. Don't bother.
         return periodSamples;
     }
 
-    var arp_mod = (ps.p_arp_mod >= 0.0)
-                  ? 1.0 - Math.pow(ps.p_arp_mod, 2.0) * 0.9
-                  : 1.0 + Math.pow(ps.p_arp_mod, 2.0) * 10.0;
+    var arp_mod = (params.p_arp_mod >= 0.0)
+                  ? 1.0 - Math.pow(params.p_arp_mod, 2.0) * 0.9
+                  : 1.0 + Math.pow(params.p_arp_mod, 2.0) * 10.0;
 
     var out = new Float64Array(len);
     for (var i = 0; i < arp_time; i++) {
