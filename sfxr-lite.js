@@ -930,6 +930,8 @@ function compress(N, samples) {
     return out;
 }
 
+// Convert the "analog" (floating-point) samples in samples_f64 to digital
+// samples. bitsPerSample must be either 8 or 16.
 function digitize(bitsPerSample, samples_f64) {
     var samples;
 
@@ -937,9 +939,8 @@ function digitize(bitsPerSample, samples_f64) {
         samples = new Uint8ClampedArray(samples_f64.length);
         for (var i = 0; i < samples_f64.length; i++) {
             // Rescale [-1.0, 1.0) to [0, 256)
-            // Don't bother rounding or clamping
-            // since the Uint8ClampedArray does it for us.
-            samples[i] = (samples_f64[i] + 1) * 128;
+            // Don't bother clamping; Uint8ClampedArray does that.
+            samples[i] = Math.floor((samples_f64[i] + 1) * 128);
         }
     } else {
         samples = new Uint16Array(samples_f64.length);
