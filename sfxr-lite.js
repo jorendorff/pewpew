@@ -659,7 +659,7 @@ function computeWavelengthSamples(ps) {
     var rep_time;
 
     // Repeatable variables
-    var fperiod, fmaxperiod, fslide, arp_limit;
+    var fperiod, fslide, arp_limit;
 
     function repeat() {
         // Reset the repeat clock.
@@ -667,7 +667,6 @@ function computeWavelengthSamples(ps) {
 
         // Reset all repeatable variables.
         fperiod = 100.0 / (ps.p_base_freq * ps.p_base_freq + 0.001);
-        fmaxperiod = 100.0 / (ps.p_freq_limit * ps.p_freq_limit + 0.001);
 
         fslide = 1.0 - Math.pow(ps.p_freq_ramp, 3.0) * 0.01;
 
@@ -683,6 +682,7 @@ function computeWavelengthSamples(ps) {
     repeat();  // First time through, this is a bit of a misnomer
 
     // Frequency slide
+    var fmaxperiod = 100.0 / (ps.p_freq_limit * ps.p_freq_limit + 0.001);
     var fdslide = -Math.pow(ps.p_freq_dramp, 3.0) * 0.000001;
 
     // Arpeggio
@@ -720,8 +720,7 @@ function computeWavelengthSamples(ps) {
         if (fperiod > fmaxperiod) {
             fperiod = fmaxperiod;
             if (ps.p_freq_limit > 0.0) {
-                buffer = buffer.subarray(0, write_index);
-                return buffer;
+                return buffer.subarray(0, write_index);
             }
         }
 
