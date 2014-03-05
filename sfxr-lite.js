@@ -660,10 +660,7 @@ function synthesize_main(ps) {
     var rep_time;
 
     // Repeatable variables
-    var fperiod, period, fmaxperiod;
-    var fslide, fdslide;
-    var square_duty;
-    var arp_mod, arp_time, arp_limit;
+    var fperiod, fmaxperiod, fslide, arp_limit;
 
     function repeat() {
         // Reset the repeat clock.
@@ -671,37 +668,31 @@ function synthesize_main(ps) {
 
         // Reset all repeatable variables.
         fperiod = 100.0 / (ps.p_base_freq * ps.p_base_freq + 0.001);
-        period = Math.floor(fperiod);
         fmaxperiod = 100.0 / (ps.p_freq_limit * ps.p_freq_limit + 0.001);
 
         fslide = 1.0 - Math.pow(ps.p_freq_ramp, 3.0) * 0.01;
-        fdslide = -Math.pow(ps.p_freq_dramp, 3.0) * 0.000001;
 
-        square_duty = 0.5 - ps.p_duty * 0.5;
-
-        if (ps.p_arp_mod >= 0.0) {
-            arp_mod = 1.0 - Math.pow(ps.p_arp_mod, 2.0) * 0.9;
-        } else {
-            arp_mod = 1.0 + Math.pow(ps.p_arp_mod, 2.0) * 10.0;
-        }
-        arp_time = 0;
-        arp_limit = Math.floor(Math.pow(1.0 - ps.p_arp_speed, 2.0) * 20000 + 32);
-        if (ps.p_arp_speed == 1.0) {
-            arp_limit = 0;
-        }
+        arp_limit = (ps.p_arp_speed === 1)
+                    ? 0
+                    : Math.floor(Math.pow(1.0 - ps.p_arp_speed, 2.0) * 20000 + 32);
     }
 
     repeat();  // First time through, this is a bit of a misnomer
 
-    // Square duty
-    var square_slide = -ps.p_duty_ramp * 0.00005 / SUPERSAMPLES;  // constant
+    // Frequency slide
+    var fdslide = -Math.pow(ps.p_freq_dramp, 3.0) * 0.000001;
+
+    // Arpeggio
+    var arp_mod = (ps.p_arp_mod >= 0.0)
+                  ? 1.0 - Math.pow(ps.p_arp_mod, 2.0) * 0.9
+                  : 1.0 + Math.pow(ps.p_arp_mod, 2.0) * 10.0;
 
     // Vibrato
     var vib_phase = 0.0;
     var vib_speed = Math.pow(ps.p_vib_speed, 2.0) * 0.01;  // constant
     var vib_amp = ps.p_vib_strength * 0.5;  // constant
 
-    // ...end of initialization. Generate samples.
+    // ...end of initialization. Generate wavelength samples.
 
     var env_length = env_lengths(ps);
     var max_samples = env_length[0] + env_length[1] + env_length[2];
@@ -737,7 +728,8 @@ function synthesize_main(ps) {
             vib_phase += vib_speed;
             rfperiod = fperiod * (1.0 + Math.sin(vib_phase) * vib_amp);
         }
-        period = Math.floor(rfperiod);
+
+        var period = Math.floor(rfperiod);
         if (period < 8) {
             period = 8;
         }
@@ -753,6 +745,11 @@ function synthesize_main(ps) {
 
 function applyBaseWaveform(params, wavelengthSamples) {
     var type = params.wave_type;
+
+    // Square duty
+    // BUG: This should reset when repeat() fires.
+    var square_duty = 0.5 - ps.p_duty * 0.5;
+    var square_slide = -params.p_duty_ramp * 0.00005 / SUPERSAMPLES;
 
     // Noise
     var noise_buffer = [];
@@ -885,13 +882,13 @@ function applyPhaser(params, samples) {
 }
 
 function applyEnvelope(params, samples) {
+    var gain = Math.exp(params.sound_vol) - 1;  // constant
+    var env_length = env_lengths(params);
+
     var len = samples.length;
     var out = new Float64Array(len);
     var env_stage = 0;
     var env_time = 0;
-    var env_length = env_lengths(params);
-    var gain = Math.exp(params.sound_vol) - 1;  // constant
-
     for (var i = 0; i < len; i++) {
         var env_vol;
         if (env_stage === 0) {
@@ -920,7 +917,7 @@ function applyEnvelope(params, samples) {
 // Reduce the size of samples by a factor of N by decreasing the sample rate.
 // The output contains a single (average) sample for every N consecutive
 // samples of input.
-function compress(samples, N) {
+function compress(N, samples) {
     var outSize = Math.floor(samples.length / N);
     var out = new Float64Array(outSize);
     var rp = 0, wp = 0;
@@ -934,7 +931,7 @@ function compress(samples, N) {
     return out;
 }
 
-function digitize(samples_f64, bitsPerSample) {
+function digitize(bitsPerSample, samples_f64) {
     var samples;
 
     if (bitsPerSample === 8) {
@@ -965,8 +962,8 @@ function synthesize(params) {
     samples_f64 = applyFilters(params, samples_f64);
     samples_f64 = applyPhaser(params, samples_f64);
     samples_f64 = applyEnvelope(params, samples_f64);
-    samples_f64 = compress(samples_f64, SUPERSAMPLES * Math.floor(44100 / params.sample_rate));
-    return digitize(samples_f64, params.sample_size);
+    samples_f64 = compress(SUPERSAMPLES * Math.floor(44100 / params.sample_rate), samples_f64);
+    return digitize(params.sample_size, samples_f64);
 }
 
 
