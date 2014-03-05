@@ -648,7 +648,6 @@ function env_lengths(ps) {
 function computePeriodSamples(ps) {
     // If ps.p_repeat_speed is nonzero, the frequency will reset periodically
     // during the sound.
-
     var rep_period = (ps.p_repeat_speed == 0.0)
                      ? 0
                      : Math.floor(Math.pow(1.0 - ps.p_repeat_speed, 2.0) * 20000 + 32);
@@ -656,12 +655,9 @@ function computePeriodSamples(ps) {
     var fperiod, fslide; // variables that reset
 
     function repeat() {
-        // Reset the clock.
+        // Reset the clock and the two variables that reset.
         rep_time = 0;
-
-        // Reset all repeatable variables.
         fperiod = 100.0 / (ps.p_base_freq * ps.p_base_freq + 0.001);
-
         fslide = 1.0 - Math.pow(ps.p_freq_ramp, 3.0) * 0.01;
     }
 
@@ -676,9 +672,8 @@ function computePeriodSamples(ps) {
     var env_length = env_lengths(ps);
     var max_samples = (env_length[0] + env_length[1] + env_length[2]) / SUPERSAMPLES;
     var buffer = new Float64Array(max_samples);
-    var write_index = 0;
 
-    for (var t = 0; write_index < max_samples; ++t) {
+    for (var t = 0; t < max_samples; ++t) {
         // Repeats
         if (rep_period != 0 && ++rep_time >= rep_period) {
             repeat();
@@ -690,11 +685,11 @@ function computePeriodSamples(ps) {
         if (fperiod > fmaxperiod) {
             fperiod = fmaxperiod;
             if (ps.p_freq_limit > 0.0) {
-                return buffer.subarray(0, write_index);
+                return buffer.subarray(0, t);
             }
         }
 
-        buffer[write_index++] = fperiod;
+        buffer[t] = fperiod;
     }
 
     return buffer;
