@@ -645,7 +645,7 @@ function env_lengths(ps) {
     ];
 }
 
-function computeWavelengthSamples(ps) {
+function computePeriodSamples(ps) {
     // Repetition
     //
     // Some variables are "repeatable": if ps.p_repeat_speed is nonzero, they
@@ -677,7 +677,7 @@ function computeWavelengthSamples(ps) {
     var fmaxperiod = 100.0 / (ps.p_freq_limit * ps.p_freq_limit + 0.001);
     var fdslide = -Math.pow(ps.p_freq_dramp, 3.0) * 0.000001;
 
-    // ...end of initialization. Generate wavelength samples.
+    // ...end of initialization. Generate period samples.
 
     var env_length = env_lengths(ps);
     var max_samples = (env_length[0] + env_length[1] + env_length[2]) / SUPERSAMPLES;
@@ -708,12 +708,12 @@ function computeWavelengthSamples(ps) {
 
 // In sythesizers, "arpeggio" means an abrupt change in frequency during a
 // sound. This synthesizer only supports a single change.
-function applyArpeggio(params, wavelengthSamples) {
-    var len = wavelengthSamples.length;
+function applyArpeggio(params, periodSamples) {
+    var len = periodSamples.length;
     var arp_time = Math.floor(Math.pow(1.0 - ps.p_arp_speed, 2.0) * 20000 + 32);
     if (params.p_arp_mod === 0.0 || arp_time >= len) {
         // No arpeggio.
-        return wavelengthSamples;
+        return periodSamples;
     }
 
     var arp_mod = (ps.p_arp_mod >= 0.0)
@@ -722,28 +722,28 @@ function applyArpeggio(params, wavelengthSamples) {
 
     var out = new Float64Array(len);
     for (var i = 0; i < arp_time; i++) {
-        out[i] = wavelengthSamples[i];
+        out[i] = periodSamples[i];
     }
     for (; i < len; i++) {
-        out[i] = wavelengthSamples[i] * arp_mod;
+        out[i] = periodSamples[i] * arp_mod;
     }
     return out;
 }
 
-function applyVibrato(params, wavelengthSamples) {
+function applyVibrato(params, periodSamples) {
     var vib_phase = 0.0;
     var vib_speed = Math.pow(params.p_vib_speed, 2.0) * 0.01;
     var vib_amp = params.p_vib_strength * 0.5;
 
-    var len = wavelengthSamples.length;
+    var len = periodSamples.length;
     var out = new Float64Array(len);
     for (var i = 0; i < len; i++) {
         // Vibrato - if ps.p_vib_strength is 0, then vib_amp is 0 and this has no effect.
         vib_phase += vib_speed;
-        var rfperiod = wavelengthSamples[i] * (1.0 + Math.sin(vib_phase) * vib_amp);
+        var period = periodSamples[i] * (1.0 + vib_amp * Math.sin(vib_phase));
 
         // But this has an effect regardless.
-        var period = Math.floor(rfperiod);
+        period = Math.floor(period);
         if (period < 8) {
             period = 8;
         }
@@ -769,7 +769,7 @@ function prolong(N, samples) {
     return out;
 }
 
-function applyBaseWaveform(params, wavelengthSamples) {
+function applyBaseWaveform(params, periodSamples) {
     var type = params.wave_type;
 
     // Square duty
@@ -783,11 +783,11 @@ function applyBaseWaveform(params, wavelengthSamples) {
         noise_buffer[i] = Math.random() * 2.0 - 1.0;
     }
 
-    var len = wavelengthSamples.length;
+    var len = periodSamples.length;
     var out = new Float64Array(len);
     var phase = 0;
     for (var i = 0; i < len; i++) {
-        var period = wavelengthSamples[i];
+        var period = periodSamples[i];
 
         phase++;
         if (phase >= period) {
@@ -984,9 +984,9 @@ function digitize(bitsPerSample, samples_f64) {
 }
 
 function synthesize(params) {
-    // The first few passes operate on "wavelength samples"---that is, each
+    // The first few passes operate on "period samples"---that is, each
     // sample is the inverse of the sound's frequency at that point.
-    var samples_f64 = computeWavelengthSamples(params);
+    var samples_f64 = computePeriodSamples(params);
     samples_f64 = applyArpeggio(params, samples_f64);
     samples_f64 = applyVibrato(params, samples_f64);
     samples_f64 = prolong(SUPERSAMPLES, samples_f64);
