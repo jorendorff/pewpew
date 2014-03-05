@@ -725,12 +725,9 @@ function computeWavelengthSamples(ps) {
             }
         }
 
-        // Vibrato
-        var rfperiod = fperiod;
-        if (vib_amp > 0.0) {
-            vib_phase += vib_speed;
-            rfperiod = fperiod * (1.0 + Math.sin(vib_phase) * vib_amp);
-        }
+        // Vibrato - if ps.p_vib_strength is 0, then vib_amp is 0 and this has no effect.
+        vib_phase += vib_speed;
+        var rfperiod = fperiod * (1.0 + Math.sin(vib_phase) * vib_amp);
 
         var period = Math.floor(rfperiod);
         if (period < 8) {
