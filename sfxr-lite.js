@@ -671,6 +671,10 @@ function computeWavelengthSamples(ps) {
 
         fslide = 1.0 - Math.pow(ps.p_freq_ramp, 3.0) * 0.01;
 
+        // This makes it look as though the arpeggio effect repeats, but I
+        // don't think it does. Resetting this constant is necessary to ensure
+        // that the main loop adjusts fperiod back down as soon as repeat()
+        // returns, if t already reached arp_limit.
         arp_limit = (ps.p_arp_speed === 1)
                     ? 0
                     : Math.floor(Math.pow(1.0 - ps.p_arp_speed, 2.0) * 20000 + 32);
