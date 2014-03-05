@@ -696,6 +696,8 @@ function computePeriodSamples(params) {
 
 // In sythesizers, "arpeggio" means an abrupt change in frequency during a
 // sound. This synthesizer only supports a single cutoff point.
+//
+// Parameters: p_arp_speed, p_arp_mod
 function applyArpeggio(params, periodSamples) {
     var len = periodSamples.length;
     var arp_time = Math.floor(Math.pow(1.0 - params.p_arp_speed, 2.0) * 20000 + 32);
@@ -719,6 +721,10 @@ function applyArpeggio(params, periodSamples) {
     return out;
 }
 
+// "Vibrato" usually means oscillation in volume, but here "vibrato" is an
+// oscillation in pitch.
+//
+// Parameters: p_vib_strength, p_vib_speed
 function applyVibrato(params, periodSamples) {
     var vib_phase = 0.0;
     var vib_speed = Math.pow(params.p_vib_speed, 2.0) * 0.01;
@@ -758,6 +764,11 @@ function stretch(N, samples) {
     return out;
 }
 
+// Take the given periodSamples, which indicate how the frequency of the sound
+// is to change over time, and generate actual sampled audio data by applying
+// a waveform.
+//
+// Parameters: wave_type, p_duty, p_duty_ramp
 function applyBaseWaveform(params, periodSamples) {
     var type = params.wave_type;
 
@@ -820,6 +831,13 @@ function applyBaseWaveform(params, periodSamples) {
     return out;
 }
 
+// Apply a low-pass filter (to eliminate high-frequency noise) and a high-pass
+// filter. I don't really understand how the filters work---the algorithms are
+// sort of black magic hackery to me. Also I'm not sure why we do the high-pass
+// filter; the way the rest of the synthesizer is constructed, it seems like it
+// shouldn't be necessary.
+//
+// Parameters: p_lpf_freq, p_lpf_ramp, p_lpf_resonance, p_hpf_freq, p_hpf_ramp
 function applyFilters(params, samples) {
     var fltp = 0.0;
     var fltdp = 0.0;
@@ -865,6 +883,11 @@ function applyFilters(params, samples) {
     return out;
 }
 
+// Add to the signal... a copy of itself, somewhat out of phase?  I'm not sure
+// what effect this has on the sound, other than ... well, it seems like it
+// should double the amplitude.
+//
+// Parameters: p_pha_offset, p_pha_ramp
 function applyPhaser(params, samples) {
     var PHASER_SIZE = 1024, PHASER_MASK = PHASER_SIZE - 1;
     var fphase = Math.pow(params.p_pha_offset, 2.0) * 1020.0;
