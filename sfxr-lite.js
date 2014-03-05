@@ -645,7 +645,7 @@ function env_lengths(ps) {
     ];
 }
 
-function synthesize_main(ps) {
+function computeWavelengthSamples(ps) {
     // Repetition
     //
     // Some variables are "repeatable": if ps.p_repeat_speed is nonzero, they
@@ -653,10 +653,9 @@ function synthesize_main(ps) {
     // of the noise.
 
     // The repeat clock
-    var rep_limit = Math.floor(Math.pow(1.0 - ps.p_repeat_speed, 2.0) * 20000 + 32);
-    if (ps.p_repeat_speed == 0.0) {
-        rep_limit = 0;
-    }
+    var rep_limit = (ps.p_repeat_speed == 0.0)
+                    ? 0
+                    : Math.floor(Math.pow(1.0 - ps.p_repeat_speed, 2.0) * 20000 + 32);
     var rep_time;
 
     // Repeatable variables
@@ -957,7 +956,7 @@ function digitize(bitsPerSample, samples_f64) {
 }
 
 function synthesize(params) {
-    var samples_f64 = synthesize_main(params);
+    var samples_f64 = computeWavelengthSamples(params);
     samples_f64 = applyBaseWaveform(params, samples_f64);
     samples_f64 = applyFilters(params, samples_f64);
     samples_f64 = applyPhaser(params, samples_f64);
