@@ -97,7 +97,7 @@ function rngToParams(seed, rng) {
 
     function pickupCoin() {
         var result = Params();
-        result.wave_type = Math.floor(frnd(NUM_SHAPES));
+        result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
         if (result.wave_type === NOISE) {
             result.wave_type = SQUARE;
         }
@@ -120,7 +120,7 @@ function rngToParams(seed, rng) {
         if (rnd(2) === 2 && rnd(1)) {
             rnd(1);
         }
-        result.wave_type = Math.floor(frnd(NUM_SHAPES));
+        result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
 
         if (result.wave_type === 3) {
             result.wave_type = SQUARE;
@@ -202,7 +202,7 @@ function rngToParams(seed, rng) {
         var result = Params();
 
         if (frnd(10) < 1) {
-            result.wave_type = Math.floor(frnd(NUM_SHAPES));
+            result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
             if (result.wave_type === 3) {
                 result.wave_type = SQUARE;
             }
@@ -235,7 +235,7 @@ function rngToParams(seed, rng) {
         }
 
         if (frnd(10) < 1) {
-            result.wave_type = Math.floor(frnd(NUM_SHAPES));
+            result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
             if (result.wave_type === 3) {
                 result.wave_type = SQUARE;
             }
@@ -265,7 +265,7 @@ function rngToParams(seed, rng) {
 
         }
         if (frnd(10) < 1) {
-            result.wave_type = Math.floor(frnd(NUM_SHAPES));
+            result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
 
             if (result.wave_type === 3) {
                 result.wave_type = SQUARE;
@@ -295,7 +295,7 @@ function rngToParams(seed, rng) {
             return result;
         }
         if (frnd(5) > 1) {
-            result.wave_type = Math.floor(frnd(NUM_SHAPES));
+            result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
 
             if (result.wave_type === 3) {
                 result.wave_type = SQUARE;
@@ -351,7 +351,7 @@ function rngToParams(seed, rng) {
 
         }
 
-        result.wave_type = Math.floor(frnd(NUM_SHAPES));
+        result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
         if (result.wave_type === 1 || result.wave_type === 3) {
             result.wave_type = 2;
         }
@@ -389,7 +389,7 @@ function rngToParams(seed, rng) {
 
     function pushSound() {
         var result = Params();
-        result.wave_type = Math.floor(frnd(NUM_SHAPES));
+        result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
         if (result.wave_type === 2) {
             result.wave_type++;
         }
@@ -420,7 +420,7 @@ function rngToParams(seed, rng) {
         } else {
             result.p_duty = frnd(0.6);
         }
-        result.wave_type = Math.floor(frnd(NUM_SHAPES));
+        result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
         if (result.wave_type === 3) {
             result.wave_type = SQUARE;
         }
@@ -452,7 +452,7 @@ function rngToParams(seed, rng) {
         if (result.wave_type === SQUARE) {
             result.p_duty = frnd(0.6);
         }
-        result.wave_type = Math.floor(frnd(NUM_SHAPES));
+        result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
         result.p_base_freq = 0.2 + frnd(0.6);
         result.p_freq_ramp = -0.3 - frnd(0.4);
         result.p_env_attack = 0.0;
@@ -467,7 +467,7 @@ function rngToParams(seed, rng) {
     function jump() {
         result = Params();
         result.wave_type = SQUARE;
-        result.wave_type = Math.floor(frnd(NUM_SHAPES));
+        result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
         if (result.wave_type === 3) {
             result.wave_type = SQUARE;
         }
@@ -489,7 +489,7 @@ function rngToParams(seed, rng) {
     function blipSelect() {
         result = Params();
         result.wave_type = rnd(1);
-        result.wave_type = Math.floor(frnd(NUM_SHAPES));
+        result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
         if (result.wave_type === 3) {
             result.wave_type = rnd(1);
         }
@@ -506,7 +506,7 @@ function rngToParams(seed, rng) {
 
     function random() {
         result = Params();
-        result.wave_type = Math.floor(frnd(NUM_SHAPES));
+        result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
         result.p_base_freq = Math.pow(frnd(2.0) - 1.0, 2.0);
         if (rnd(1)) {
             result.p_base_freq = Math.pow(frnd(2.0) - 1.0, 3.0) + 0.5;
@@ -582,7 +582,7 @@ var NOISE = 3;
 var TRIANGLE = 4;
 var BREAKER = 5;
 
-var NUM_SHAPES = 6;
+var NUM_WAVE_TYPES = 6;
 
 // Sound generation parameters are on [0,1] unless noted SIGNED, & thus [-1,1]
 function Params() {
@@ -601,6 +601,7 @@ function Params() {
         p_freq_limit: 0,     // Min frequency cutoff
         p_freq_ramp: 0,      // Slide (SIGNED)
         p_freq_dramp: 0,     // Delta slide (SIGNED)
+
         // Vibrato
         p_vib_strength: 0,   // Vibrato depth
         p_vib_speed: 0,      // Vibrato speed
@@ -609,7 +610,7 @@ function Params() {
         p_arp_mod: 0,        // Change amount (SIGNED)
         p_arp_speed: 0,      // Change speed
 
-        // Duty (wat's that?)
+        // Duty (affects the timbre of SQUARE waves)
         p_duty: 0,           // Square duty
         p_duty_ramp: 0,      // Duty sweep (SIGNED)
 
