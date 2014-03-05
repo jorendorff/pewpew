@@ -646,51 +646,49 @@ function env_lengths(ps) {
     ];
 }
 
-function computePeriodSamples(ps) {
-    // If ps.p_repeat_speed is nonzero, the frequency will reset periodically
-    // during the sound.
-    var rep_period = (ps.p_repeat_speed == 0.0)
-                     ? 0
-                     : Math.floor(Math.pow(1.0 - ps.p_repeat_speed, 2.0) * 20000 + 32);
-    var rep_time;
-    var fperiod, fslide; // variables that reset
+// Parameters consulted: p_repeat_speed, p_base_freq, p_freq_limit, p_freq_ramp, p_freq_dramp;
+// also the envelope parameters, to determine the duration of the sound.
+function computePeriodSamples(params) {
+    // Determine buffer size and allocate the array.
+    var env_length = env_lengths(params);
+    var len = (env_length[0] + env_length[1] + env_length[2]) / SUPERSAMPLES;
+    var buffer = new Float64Array(len);
 
-    function repeat() {
-        // Reset the clock and the two variables that reset.
-        rep_time = 0;
-        fperiod = 100.0 / (ps.p_base_freq * ps.p_base_freq + 0.001);
-        fslide = 1.0 - Math.pow(ps.p_freq_ramp, 3.0) * 0.01;
+    // Determine whether params.p_repeat_speed comes into play.
+    // t_limit is the number of samples computed by the compute loop below.
+    var t_limit = len;
+    var rep_period = (params.p_repeat_speed == 0.0)
+                     ? 0
+                     : Math.floor(Math.pow(1.0 - params.p_repeat_speed, 2.0) * 20000 + 32);
+    if (rep_period != 0 && rep_period < t_limit) {
+        t_limit = rep_period;
     }
 
-    repeat();  // First time through, this is a bit of a misnomer
+    // Frequency slide parameters.
+    var fperiod = 100.0 / (params.p_base_freq * params.p_base_freq + 0.001);
+    var fmaxperiod = 100.0 / (params.p_freq_limit * params.p_freq_limit + 0.001);
+    var fslide = 1.0 - Math.pow(params.p_freq_ramp, 3.0) * 0.01;
+    var fdslide = -Math.pow(params.p_freq_dramp, 3.0) * 0.000001;
 
-    // Frequency slide
-    var fmaxperiod = 100.0 / (ps.p_freq_limit * ps.p_freq_limit + 0.001);
-    var fdslide = -Math.pow(ps.p_freq_dramp, 3.0) * 0.000001;
-
-    // ...end of initialization. Generate period samples.
-
-    var env_length = env_lengths(ps);
-    var max_samples = (env_length[0] + env_length[1] + env_length[2]) / SUPERSAMPLES;
-    var buffer = new Float64Array(max_samples);
-
-    for (var t = 0; t < max_samples; ++t) {
-        // Repeats
-        if (rep_period != 0 && ++rep_time >= rep_period) {
-            repeat();
-        }
-
+    // Frequency compute loop.
+    var t;
+    for (t = 0; t < t_limit; ++t) {
         // Frequency slide, and frequency slide slide!
         fslide += fdslide;
         fperiod *= fslide;
         if (fperiod > fmaxperiod) {
             fperiod = fmaxperiod;
-            if (ps.p_freq_limit > 0.0) {
+            if (params.p_freq_limit > 0.0) {
                 return buffer.subarray(0, t);
             }
         }
 
         buffer[t] = fperiod;
+    }
+
+    // Repeat the computed data to fill the buffer.
+    for (; t < len; t++) {
+        buffer[t] = buffer[t - rep_period];
     }
 
     return buffer;
