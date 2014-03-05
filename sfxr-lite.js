@@ -747,7 +747,7 @@ function applyBaseWaveform(params, wavelengthSamples) {
 
     // Square duty
     // BUG: This should reset when repeat() fires.
-    var square_duty = 0.5 - ps.p_duty * 0.5;
+    var square_duty = 0.5 - params.p_duty * 0.5;
     var square_slide = -params.p_duty_ramp * 0.00005 / SUPERSAMPLES;
 
     // Noise
