@@ -677,11 +677,6 @@ function computeWavelengthSamples(ps) {
     var fmaxperiod = 100.0 / (ps.p_freq_limit * ps.p_freq_limit + 0.001);
     var fdslide = -Math.pow(ps.p_freq_dramp, 3.0) * 0.000001;
 
-    // Arpeggio
-    var arp_mod = 1.0;
-    var arp_check_required = (ps.p_arp_mod !== 0 && ps.p_arp_speed !== 1);
-    var arp_time = Math.floor(Math.pow(1.0 - ps.p_arp_speed, 2.0) * 20000 + 32);
-
     // ...end of initialization. Generate wavelength samples.
 
     var env_length = env_lengths(ps);
@@ -705,18 +700,34 @@ function computeWavelengthSamples(ps) {
             }
         }
 
-        // Arpeggio (single)
-        if (arp_check_required && t >= arp_time) {
-            arp_mod = (ps.p_arp_mod >= 0.0)
-                      ? 1.0 - Math.pow(ps.p_arp_mod, 2.0) * 0.9
-                      : 1.0 + Math.pow(ps.p_arp_mod, 2.0) * 10.0;
-            arp_check_required = false;
-        }
-
         buffer[write_index++] = fperiod * arp_mod;
     }
 
     return buffer;
+}
+
+// In sythesizers, "arpeggio" means an abrupt change in frequency during a
+// sound. This synthesizer only supports a single change.
+function applyArpeggio(params, wavelengthSamples) {
+    var len = wavelengthSamples.length;
+    var arp_time = Math.floor(Math.pow(1.0 - ps.p_arp_speed, 2.0) * 20000 + 32);
+    if (params.p_arp_mod === 0.0 || arp_time >= len) {
+        // No arpeggio.
+        return wavelengthSamples;
+    }
+
+    var arp_mod = (ps.p_arp_mod >= 0.0)
+                  ? 1.0 - Math.pow(ps.p_arp_mod, 2.0) * 0.9
+                  : 1.0 + Math.pow(ps.p_arp_mod, 2.0) * 10.0;
+
+    var out = new Float64Array(len);
+    for (var i = 0; i < arp_time; i++) {
+        out[i] = wavelengthSamples[i];
+    }
+    for (; i < len; i++) {
+        out[i] = wavelengthSamples[i] * arp_mod;
+    }
+    return out;
 }
 
 function applyVibrato(params, wavelengthSamples) {
@@ -973,10 +984,17 @@ function digitize(bitsPerSample, samples_f64) {
 }
 
 function synthesize(params) {
+    // The first few passes operate on "wavelength samples"---that is, each
+    // sample is the inverse of the sound's frequency at that point.
     var samples_f64 = computeWavelengthSamples(params);
+    samples_f64 = applyArpeggio(params, samples_f64);
     samples_f64 = applyVibrato(params, samples_f64);
     samples_f64 = prolong(SUPERSAMPLES, samples_f64);
+
+    // This step applies an actual waveform so that we have playable sound.
     samples_f64 = applyBaseWaveform(params, samples_f64);
+
+    // The remaining passes apply to actual time-domain samples.
     samples_f64 = applyFilters(params, samples_f64);
     samples_f64 = applyPhaser(params, samples_f64);
     samples_f64 = applyEnvelope(params, samples_f64);
