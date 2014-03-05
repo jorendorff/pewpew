@@ -659,7 +659,7 @@ function computeWavelengthSamples(ps) {
     var rep_time;
 
     // Repeatable variables
-    var fperiod, fslide, arp_limit;
+    var fperiod, fslide;
 
     function repeat() {
         // Reset the repeat clock.
@@ -669,14 +669,6 @@ function computeWavelengthSamples(ps) {
         fperiod = 100.0 / (ps.p_base_freq * ps.p_base_freq + 0.001);
 
         fslide = 1.0 - Math.pow(ps.p_freq_ramp, 3.0) * 0.01;
-
-        // This makes it look as though the arpeggio effect repeats, but I
-        // don't think it does. Resetting this constant is necessary to ensure
-        // that the main loop adjusts fperiod back down as soon as repeat()
-        // returns, if t already reached arp_limit.
-        arp_limit = (ps.p_arp_speed === 1)
-                    ? 0
-                    : Math.floor(Math.pow(1.0 - ps.p_arp_speed, 2.0) * 20000 + 32);
     }
 
     repeat();  // First time through, this is a bit of a misnomer
@@ -686,9 +678,9 @@ function computeWavelengthSamples(ps) {
     var fdslide = -Math.pow(ps.p_freq_dramp, 3.0) * 0.000001;
 
     // Arpeggio
-    var arp_mod = (ps.p_arp_mod >= 0.0)
-                  ? 1.0 - Math.pow(ps.p_arp_mod, 2.0) * 0.9
-                  : 1.0 + Math.pow(ps.p_arp_mod, 2.0) * 10.0;
+    var arp_mod = 1.0;
+    var arp_check_required = (ps.p_arp_mod !== 0 && ps.p_arp_speed !== 1);
+    var arp_time = Math.floor(Math.pow(1.0 - ps.p_arp_speed, 2.0) * 20000 + 32);
 
     // ...end of initialization. Generate wavelength samples.
 
@@ -703,12 +695,6 @@ function computeWavelengthSamples(ps) {
             repeat();
         }
 
-        // Arpeggio (single)
-        if (arp_limit != 0 && t >= arp_limit) {
-            arp_limit = 0;
-            fperiod *= arp_mod;
-        }
-
         // Frequency slide, and frequency slide slide!
         fslide += fdslide;
         fperiod *= fslide;
@@ -719,7 +705,15 @@ function computeWavelengthSamples(ps) {
             }
         }
 
-        buffer[write_index++] = fperiod;
+        // Arpeggio (single)
+        if (arp_check_required && t >= arp_time) {
+            arp_mod = (ps.p_arp_mod >= 0.0)
+                      ? 1.0 - Math.pow(ps.p_arp_mod, 2.0) * 0.9
+                      : 1.0 + Math.pow(ps.p_arp_mod, 2.0) * 10.0;
+            arp_check_required = false;
+        }
+
+        buffer[write_index++] = fperiod * arp_mod;
     }
 
     return buffer;
