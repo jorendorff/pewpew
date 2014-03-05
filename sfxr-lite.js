@@ -744,7 +744,7 @@ function applyVibrato(params, periodSamples) {
 
 // Return a copy of the array samples, but with each element repeated N times.
 // The result is N times as long as samples.
-function prolong(N, samples) {
+function stretch(N, samples) {
     var len = samples.length;
     var out = new Float64Array(len * N);
     var j = 0, k = 0;
@@ -979,7 +979,7 @@ function synthesize(params) {
     var samples_f64 = computePeriodSamples(params);
     samples_f64 = applyArpeggio(params, samples_f64);
     samples_f64 = applyVibrato(params, samples_f64);
-    samples_f64 = prolong(SUPERSAMPLES, samples_f64);
+    samples_f64 = stretch(SUPERSAMPLES, samples_f64);
 
     // This step applies an actual waveform so that we have playable sound.
     samples_f64 = applyBaseWaveform(params, samples_f64);
