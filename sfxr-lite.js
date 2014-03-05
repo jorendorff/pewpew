@@ -812,12 +812,12 @@ function applyFilters(params, samples) {
     var fltdmp =
         5.0 / (1.0 + Math.pow(params.p_lpf_resonance, 2.0) * 20.0) * (0.01 + fltw);
     if (fltdmp > 0.8) fltdmp = 0.8;
-    var fltphp = 0.0;
-    var flthp = Math.pow(params.p_hpf_freq, 2.0) * 0.1;  // function of t and flthp_d
+    var flthp = Math.pow(params.p_hpf_freq, 2.0) * 0.1;  // function of i and flthp_d
     var flthp_d = Math.pow(1.0 + params.p_hpf_ramp * 0.0003, 1 / SUPERSAMPLES);  // constant
 
     var len = samples.length;
     var out = new Float64Array(len);
+    var y_out = 0.0;
     for (var i = 0; i < len; i++) {
         var y = samples[i];
 
@@ -841,10 +841,10 @@ function applyFilters(params, samples) {
             if (flthp < 0.00001) flthp = 0.00001;
             if (flthp > 0.1) flthp = 0.1;
         }
-        fltphp += fltp - pp;
-        fltphp -= fltphp * flthp;
+        y_out += fltp - pp;
+        y_out -= y_out * flthp;
 
-        out[i] = fltphp;
+        out[i] = y_out;
     }
     return out;
 }
