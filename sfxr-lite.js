@@ -943,37 +943,46 @@ function applyPhaser(params, samples) {
     return out;
 }
 
-function applyEnvelope(params, samples) {
-    var gain = Math.exp(params.sound_vol) - 1;  // constant
-    var env_length = env_lengths(params);
-
-    var len = samples.length;
+// Multiply two Float64Array data sequences pointwise. The result is the same
+// length as the shorter sequence.
+function mul(A, B) {
+    var len = Math.min(A.length, B.length);
     var out = new Float64Array(len);
-    var env_stage = 0;
-    var env_time = 0;
-    for (var i = 0; i < len; i++) {
-        var env_vol;
-        if (env_stage === 0) {
-            env_vol = env_time / env_length[0];
-        } else if (env_stage === 1) {
-            env_vol = 1.0 + (1.0 - env_time / env_length[1]) * 2.0 * params.p_env_punch;
-        } else {  // env_stage == 2
-            env_vol = 1.0 - env_time / env_length[2];
-        }
-
-        out[i] = samples[i] * env_vol * gain;
-
-        // Volume envelope
-        env_time++;
-        if (env_time >= env_length[env_stage]) {
-            env_time = 0;
-            env_stage++;
-            if (env_stage === 3 && i + 1 !== len) {
-                throw new Error("oops, expected " + len + " got " + (i + 1));
-            }
-        }
+    for (var t = 0; t < len; t++) {
+        out[t] = A[t] * B[t];
     }
     return out;
+}
+
+// Apply the volume envelope to the given audio samples. This determines
+// whether the sound starts suddenly or fades in gradually; how long it stays at
+// maximum volume; whether it stops abruptly or fades out; and its overall
+// volume.
+//
+// Parameters: sound_vol, p_env_attack, p_env_sustain, p_env_punch, p_env_decay
+function applyEnvelope(params, samples) {
+    var gain = Math.exp(params.sound_vol) - 1;
+    var env_length = env_lengths(params);
+    var attack_len = env_length[0], sustain_len = env_length[1], decay_len = env_length[2];
+    var env = new Float64Array(attack_len + sustain_len + decay_len);
+    var t = 0;
+
+    // Attack phase.
+    for (var ta = 0; ta < attack_len; ta++) {
+        env[t++] = gain * (ta / attack_len);
+    }
+
+    // Sustain phase.
+    for (var ts = 0; ts < sustain_len; ts++) {
+        env[t++] = gain * (1.0 + (1.0 - ts / sustain_len) * 2.0 * params.p_env_punch);
+    }
+
+    // Decay phase.
+    for (var td = 0; td < decay_len; td++) {
+        env[t++] = gain * (1.0 - td / decay_len);
+    }
+
+    return mul(samples, env);
 }
 
 // Reduce the size of samples by a factor of N by decreasing the sample rate.
