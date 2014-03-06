@@ -910,38 +910,39 @@ function applyFilters(params, samples) {
     return out;
 }
 
-// Add to the signal... a copy of itself, somewhat out of phase?  I'm not sure
-// what effect this has on the sound, other than ... well, it seems like it
-// should double the amplitude.
+// Distort the signal by adding it to itself with an offset of 2.9
+// milliseconds. The offset is parameterized; 2.9msec is the
+// maximum. Strangely, this effect is always enabled, even with default
+// Params. The distortion is slight--more noticeably, this doubles the
+// amplitude (volume) of the sound.
 //
 // Parameters: p_pha_offset, p_pha_ramp
 function applyPhaser(params, samples) {
-    var PHASER_SIZE = 1024, PHASER_MASK = PHASER_SIZE - 1;
-    var fphase = Math.pow(params.p_pha_offset, 2.0) * 1020.0;
-    if (params.p_pha_offset < 0.0) fphase = -fphase;
-
-    var fdphase = Math.pow(params.p_pha_ramp, 2.0) / SUPERSAMPLES;  // constant
-    if (params.p_pha_ramp < 0.0) fdphase = -fdphase;
-
-    var ipp = 0;
+    var SAMPLE_RATE = SUPERSAMPLES * 44100;
+    var PHASER_SIZE = Math.floor(SAMPLE_RATE * 0.0029);
     var phaser_buffer = new Float64Array(PHASER_SIZE);
     for (var i = 0; i < PHASER_SIZE; ++i) {
         phaser_buffer[i] = 0.0;
     }
 
+    var fphase = Math.pow(params.p_pha_offset, 2.0) * (255 / 256 * PHASER_SIZE);
+    if (params.p_pha_offset < 0.0) fphase = -fphase;
+
+    var fdphase = Math.pow(params.p_pha_ramp, 2.0) * 44100 / SAMPLE_RATE;
+    if (params.p_pha_ramp < 0.0) fdphase = -fdphase;
+
     var len = samples.length;
     var out = new Float64Array(len);
+    var j = 0;
     for (var i = 0; i < len; i++) {
         var y = samples[i];
-        phaser_buffer[ipp & PHASER_MASK] = y;
+        phaser_buffer[j] = y;
 
         fphase += fdphase;
         var iphase = Math.abs(Math.floor(fphase));
-        if (iphase > PHASER_MASK) iphase = PHASER_MASK;
-        y += phaser_buffer[(ipp - iphase + PHASER_SIZE) & PHASER_MASK];
-        ipp = (ipp + 1) & PHASER_MASK;
-
-        out[i] = y;
+        if (iphase > PHASER_SIZE - 1) iphase = PHASER_SIZE - 1;
+        out[i] = y + phaser_buffer[(j + PHASER_SIZE - iphase) % PHASER_SIZE];
+        j = (j + 1) % PHASER_SIZE;
     }
     return out;
 }
