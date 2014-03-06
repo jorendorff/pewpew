@@ -575,6 +575,7 @@ function rngToParams(seed, rng) {
 
 // === synthesize - Given a Params object, produce sampled audio.
 
+// Wave types for use as params.wave_type.
 var SQUARE = 0;
 var SAWTOOTH = 1;
 var SINE = 2;
@@ -584,6 +585,9 @@ var BREAKER = 5;
 
 var NUM_WAVE_TYPES = 6;
 
+// Create a Params object. Tweak the parameters and then pass it to
+// synthesize() to produce sampled audio data.
+//
 // Sound generation parameters are on [0,1] unless noted SIGNED, & thus [-1,1]
 function Params() {
     return {
@@ -636,18 +640,38 @@ function Params() {
     };
 }
 
+// Different parts of the pipeline actually use different sample rates.
+//   - Early parts use an implied sample rate of 44100 Hz.
+//   - Then we use stretch() to increase the number of samples
+//     without changing the duration of the sound.
+//     The rate becomes SUPERSAMPLES*44100 Hz ("supersampling").
+//   - Finally we use compress() to lower the sample rate to params.sample_rate
+//     (5512 Hz in practice; see the SAMPLE_RATE constant in rngToParams).
+//
+// It's unclear whether this is actually useful, due to the smoothing in
+// compress(), or it's just a huge waste of CPU and we should run the whole
+// pipeline at 5512 Hz. Anyway, SUPERSAMPLES is the bloat factor for the middle
+// section, compared to the first section, and it pops up all over the place
+// wherever we have to adjust something to cope with the varying sample rates.
 var SUPERSAMPLES = 8;
 
-function env_lengths(ps) {
+// Return the length of the attack, sustain, and decay phases of the volume envelope.
+// The units are (SUPERSAMPLES * 44100)ths of a second.
+function env_lengths(params) {
     return [
-        SUPERSAMPLES * (Math.floor(ps.p_env_attack * ps.p_env_attack * 100000.0) + 1),
-        SUPERSAMPLES * (Math.floor(ps.p_env_sustain * ps.p_env_sustain * 100000.0) + 1),
-        SUPERSAMPLES * (Math.floor(ps.p_env_decay * ps.p_env_decay * 100000.0) + 1)
+        SUPERSAMPLES * (Math.floor(params.p_env_attack * params.p_env_attack * 100000.0) + 1),
+        SUPERSAMPLES * (Math.floor(params.p_env_sustain * params.p_env_sustain * 100000.0) + 1),
+        SUPERSAMPLES * (Math.floor(params.p_env_decay * params.p_env_decay * 100000.0) + 1)
     ];
 }
 
-// Parameters consulted: p_repeat_speed, p_base_freq, p_freq_limit, p_freq_ramp, p_freq_dramp;
-// also the envelope parameters, to determine the duration of the sound.
+// The beginning of the synthesizer pipeline. Generate a time series, at
+// 44100 Hz, that indicates the frequency of the sound at each moment.  The
+// starting frequency is params.p_base_freq, but other parameters can make the
+// frequency slide or oscillate.
+//
+// Parameters: p_repeat_speed, p_base_freq, p_freq_limit, p_freq_ramp, p_freq_dramp;
+// also the envelope parameters, but only to determine the duration of the sound.
 function computePeriodSamples(params) {
     // Determine buffer size and allocate the array.
     var env_length = env_lengths(params);
@@ -721,7 +745,7 @@ function applyArpeggio(params, periodSamples) {
     return out;
 }
 
-// "Vibrato" usually means oscillation in volume, but here "vibrato" is an
+// I'm used to "vibrato" meaning oscillation in volume, but here "vib" is an
 // oscillation in pitch.
 //
 // Parameters: p_vib_strength, p_vib_speed
