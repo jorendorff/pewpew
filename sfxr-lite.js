@@ -656,12 +656,15 @@ function Params() {
 var SUPERSAMPLES = 8;
 
 // Return the length of the attack, sustain, and decay phases of the volume envelope.
-// The units are (SUPERSAMPLES * 44100)ths of a second.
-function env_lengths(params) {
+// The units are samples, at the given rate. Example: if rate == 44100 and the attack
+// should be 1/100 of a second, the first element of the return value will be
+// 441, because 44100 Hz * 1/100 sec = 441.
+function env_lengths(params, rate) {
+    var f = rate * (100000.0 / 44100.0);
     return [
-        SUPERSAMPLES * (Math.floor(params.p_env_attack * params.p_env_attack * 100000.0) + 1),
-        SUPERSAMPLES * (Math.floor(params.p_env_sustain * params.p_env_sustain * 100000.0) + 1),
-        SUPERSAMPLES * (Math.floor(params.p_env_decay * params.p_env_decay * 100000.0) + 1)
+        Math.floor(f * params.p_env_attack * params.p_env_attack),
+        Math.floor(f * params.p_env_sustain * params.p_env_sustain),
+        Math.floor(f * params.p_env_decay * params.p_env_decay)
     ];
 }
 
@@ -674,8 +677,8 @@ function env_lengths(params) {
 // also the envelope parameters, but only to determine the duration of the sound.
 function computePeriodSamples(params) {
     // Determine buffer size and allocate the array.
-    var env_length = env_lengths(params);
-    var len = (env_length[0] + env_length[1] + env_length[2]) / SUPERSAMPLES;
+    var env_length = env_lengths(params, 44100);
+    var len = (env_length[0] + env_length[1] + env_length[2]);
     var buffer = new Float64Array(len);
 
     // Determine whether params.p_repeat_speed comes into play.
@@ -943,6 +946,23 @@ function applyPhaser(params, samples) {
     return out;
 }
 
+// Reduce the size of samples by a factor of N by decreasing the sample rate.
+// The output contains a single (average) sample for every N consecutive
+// samples of input.
+function compress(N, samples) {
+    var outSize = Math.floor(samples.length / N);
+    var out = new Float64Array(outSize);
+    var rp = 0, wp = 0;
+    while (wp < outSize) {
+        var total = 0;
+        for (var j = 0; j < N; j++) {
+            total += samples[rp++];
+        }
+        out[wp++] = total / N;
+    }
+    return out;
+}
+
 // Multiply two Float64Array data sequences pointwise. The result is the same
 // length as the shorter sequence.
 function mul(A, B) {
@@ -962,7 +982,7 @@ function mul(A, B) {
 // Parameters: sound_vol, p_env_attack, p_env_sustain, p_env_punch, p_env_decay
 function applyEnvelope(params, samples) {
     var gain = Math.exp(params.sound_vol) - 1;
-    var env_length = env_lengths(params);
+    var env_length = env_lengths(params, params.sample_rate);
     var attack_len = env_length[0], sustain_len = env_length[1], decay_len = env_length[2];
     var env = new Float64Array(attack_len + sustain_len + decay_len);
     var t = 0;
@@ -983,23 +1003,6 @@ function applyEnvelope(params, samples) {
     }
 
     return mul(samples, env);
-}
-
-// Reduce the size of samples by a factor of N by decreasing the sample rate.
-// The output contains a single (average) sample for every N consecutive
-// samples of input.
-function compress(N, samples) {
-    var outSize = Math.floor(samples.length / N);
-    var out = new Float64Array(outSize);
-    var rp = 0, wp = 0;
-    while (wp < outSize) {
-        var total = 0;
-        for (var j = 0; j < N; j++) {
-            total += samples[rp++];
-        }
-        out[wp++] = total / N;
-    }
-    return out;
 }
 
 // Convert the "analog" (floating-point) samples in samples_f64 to digital
@@ -1028,6 +1031,7 @@ function digitize(bitsPerSample, samples_f64) {
     return samples;
 }
 
+// Generate sampled audio from the given Params object.
 function synthesize(params) {
     // The first few passes operate on "period samples"---that is, each
     // sample is the inverse of the sound's frequency at that point.
@@ -1042,8 +1046,8 @@ function synthesize(params) {
     // The remaining passes apply to actual time-domain samples.
     samples_f64 = applyFilters(params, samples_f64);
     samples_f64 = applyPhaser(params, samples_f64);
-    samples_f64 = applyEnvelope(params, samples_f64);
     samples_f64 = compress(SUPERSAMPLES * Math.floor(44100 / params.sample_rate), samples_f64);
+    samples_f64 = applyEnvelope(params, samples_f64);
     return digitize(params.sample_size, samples_f64);
 }
 
