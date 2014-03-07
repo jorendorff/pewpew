@@ -698,7 +698,7 @@ function computeWavelengthSamples(ps) {
     // ...end of initialization. Generate wavelength samples.
 
     var env_length = env_lengths(ps);
-    var max_samples = env_length[0] + env_length[1] + env_length[2];
+    var max_samples = (env_length[0] + env_length[1] + env_length[2]) / SUPERSAMPLES;
     var buffer = new Float64Array(max_samples);
     var write_index = 0;
 
@@ -733,13 +733,27 @@ function computeWavelengthSamples(ps) {
             period = 8;
         }
 
-        // 8x supersampling
-        for (var si = 0; si < SUPERSAMPLES; ++si) {
-            buffer[write_index++] = period;
-        }
+        buffer[write_index++] = period;
     }
 
     return buffer;
+}
+
+// Return a copy of the array samples, but with each element repeated N times.
+// The result is N times as long as samples.
+function prolong(N, samples) {
+    var len = samples.length;
+    var out = new Float64Array(len * N);
+    var j = 0, k = 0;
+    for (var i = 0; i < len; i++) {
+        var sample = samples[i];
+
+        k += N;
+        for (; j < k; j++) {
+            out[j] = sample;
+        }
+    }
+    return out;
 }
 
 function applyBaseWaveform(params, wavelengthSamples) {
@@ -958,6 +972,7 @@ function digitize(bitsPerSample, samples_f64) {
 
 function synthesize(params) {
     var samples_f64 = computeWavelengthSamples(params);
+    samples_f64 = prolong(SUPERSAMPLES, samples_f64);
     samples_f64 = applyBaseWaveform(params, samples_f64);
     samples_f64 = applyFilters(params, samples_f64);
     samples_f64 = applyPhaser(params, samples_f64);
