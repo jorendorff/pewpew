@@ -772,6 +772,9 @@ function applyVibrato(params, periodSamples) {
     return out;
 }
 
+// This function does two things: round period samples down to integers (which
+// is not a sensible thing to do really, but it has a weird, audible effect, so
+// we keep it); and enforce a minimum period (maximum frequency) of 8 samples.
 function quantizePeriodSamples(periodSamples) {
     var len = periodSamples.length;
     var out = new Float64Array(len);
