@@ -753,6 +753,12 @@ function applyArpeggio(params, periodSamples) {
 //
 // Parameters: p_vib_strength, p_vib_speed
 function applyVibrato(params, periodSamples) {
+    if (params.p_vib_speed === 0 || params.p_vib_strength === 0) {
+        // No vibrato. Rather than waste time computing an exact copy of the
+        // input, just return it unchanged.
+        return periodSamples;
+    }
+
     var vib_phase = 0.0;
     var vib_speed = Math.pow(params.p_vib_speed, 2.0) * 0.01;
     var vib_amp = params.p_vib_strength * 0.5;
@@ -760,12 +766,17 @@ function applyVibrato(params, periodSamples) {
     var len = periodSamples.length;
     var out = new Float64Array(len);
     for (var i = 0; i < len; i++) {
-        // Vibrato - if ps.p_vib_strength is 0, then vib_amp is 0 and this has no effect.
         vib_phase += vib_speed;
-        var period = periodSamples[i] * (1.0 + vib_amp * Math.sin(vib_phase));
+        out[i] = periodSamples[i] * (1.0 + vib_amp * Math.sin(vib_phase));
+    }
+    return out;
+}
 
-        // But this has an effect regardless.
-        period = Math.floor(period);
+function quantizePeriodSamples(periodSamples) {
+    var len = periodSamples.length;
+    var out = new Float64Array(len);
+    for (var i = 0; i < len; i++) {
+        var period = Math.floor(periodSamples[i]);
         if (period < 8) {
             period = 8;
         }
@@ -1039,6 +1050,7 @@ function synthesize(params) {
     var samples_f64 = computePeriodSamples(params);
     samples_f64 = applyArpeggio(params, samples_f64);
     samples_f64 = applyVibrato(params, samples_f64);
+    samples_f64 = quantizePeriodSamples(samples_f64);
     samples_f64 = stretch(SUPERSAMPLES, samples_f64);
 
     // This step applies an actual waveform so that we have playable sound.
