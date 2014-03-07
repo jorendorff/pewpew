@@ -690,11 +690,6 @@ function computeWavelengthSamples(ps) {
                   ? 1.0 - Math.pow(ps.p_arp_mod, 2.0) * 0.9
                   : 1.0 + Math.pow(ps.p_arp_mod, 2.0) * 10.0;
 
-    // Vibrato
-    var vib_phase = 0.0;
-    var vib_speed = Math.pow(ps.p_vib_speed, 2.0) * 0.01;  // constant
-    var vib_amp = ps.p_vib_strength * 0.5;  // constant
-
     // ...end of initialization. Generate wavelength samples.
 
     var env_length = env_lengths(ps);
@@ -724,19 +719,32 @@ function computeWavelengthSamples(ps) {
             }
         }
 
+        buffer[write_index++] = fperiod;
+    }
+
+    return buffer;
+}
+
+function applyVibrato(params, wavelengthSamples) {
+    var vib_phase = 0.0;
+    var vib_speed = Math.pow(params.p_vib_speed, 2.0) * 0.01;
+    var vib_amp = params.p_vib_strength * 0.5;
+
+    var len = wavelengthSamples.length;
+    var out = new Float64Array(len);
+    for (var i = 0; i < len; i++) {
         // Vibrato - if ps.p_vib_strength is 0, then vib_amp is 0 and this has no effect.
         vib_phase += vib_speed;
-        var rfperiod = fperiod * (1.0 + Math.sin(vib_phase) * vib_amp);
+        var rfperiod = wavelengthSamples[i] * (1.0 + Math.sin(vib_phase) * vib_amp);
 
+        // But this has an effect regardless.
         var period = Math.floor(rfperiod);
         if (period < 8) {
             period = 8;
         }
-
-        buffer[write_index++] = period;
+        out[i] = period;
     }
-
-    return buffer;
+    return out;
 }
 
 // Return a copy of the array samples, but with each element repeated N times.
@@ -972,6 +980,7 @@ function digitize(bitsPerSample, samples_f64) {
 
 function synthesize(params) {
     var samples_f64 = computeWavelengthSamples(params);
+    samples_f64 = applyVibrato(params, samples_f64);
     samples_f64 = prolong(SUPERSAMPLES, samples_f64);
     samples_f64 = applyBaseWaveform(params, samples_f64);
     samples_f64 = applyFilters(params, samples_f64);
