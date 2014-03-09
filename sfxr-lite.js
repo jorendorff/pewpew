@@ -101,16 +101,16 @@ function rngToParams(seed, rng) {
         if (result.wave_type === NOISE) {
             result.wave_type = SQUARE;
         }
-        result.p_base_freq = 0.4 + frnd(0.5);
-        result.p_env_attack = 0.0;
-        result.p_env_sustain = frnd(0.1);
-        result.p_env_decay = 0.1 + frnd(0.4);
-        result.p_env_punch = 0.3 + frnd(0.3);
+        result.base_freq = 0.4 + frnd(0.5);
+        result.env_attack = 0.0;
+        result.env_sustain = frnd(0.1);
+        result.env_decay = 0.1 + frnd(0.4);
+        result.env_punch = 0.3 + frnd(0.3);
         if (rnd(1)) {
-            result.p_arp_speed = 0.5 + frnd(0.2);
+            result.arp_speed = 0.5 + frnd(0.2);
             var num = (frnd(7) | 1) + 1;
             var den = num + (frnd(7) | 1) + 2;
-            result.p_arp_mod = (+num) / (+den);
+            result.arp_mod = (+num) / (+den);
         }
         return result;
     }
@@ -126,36 +126,36 @@ function rngToParams(seed, rng) {
             result.wave_type = SQUARE;
         }
 
-        result.p_base_freq = 0.5 + frnd(0.5);
-        result.p_freq_limit = result.p_base_freq - 0.2 - frnd(0.6);
-        if (result.p_freq_limit < 0.2) {
-            result.p_freq_limit = 0.2;
+        result.base_freq = 0.5 + frnd(0.5);
+        result.freq_limit = result.base_freq - 0.2 - frnd(0.6);
+        if (result.freq_limit < 0.2) {
+            result.freq_limit = 0.2;
         }
-        result.p_freq_ramp = -0.15 - frnd(0.2);
+        result.freq_ramp = -0.15 - frnd(0.2);
         if (rnd(2) === 0) {
-            result.p_base_freq = 0.3 + frnd(0.6);
-            result.p_freq_limit = frnd(0.1);
-            result.p_freq_ramp = -0.35 - frnd(0.3);
+            result.base_freq = 0.3 + frnd(0.6);
+            result.freq_limit = frnd(0.1);
+            result.freq_ramp = -0.35 - frnd(0.3);
         }
         if (rnd(1)) {
-            result.p_duty = frnd(0.5);
-            result.p_duty_ramp = frnd(0.2);
+            result.duty = frnd(0.5);
+            result.duty_ramp = frnd(0.2);
         } else {
-            result.p_duty = 0.4 + frnd(0.5);
-            result.p_duty_ramp = -frnd(0.7);
+            result.duty = 0.4 + frnd(0.5);
+            result.duty_ramp = -frnd(0.7);
         }
-        result.p_env_attack = 0.0;
-        result.p_env_sustain = 0.1 + frnd(0.2);
-        result.p_env_decay = frnd(0.4);
+        result.env_attack = 0.0;
+        result.env_sustain = 0.1 + frnd(0.2);
+        result.env_decay = frnd(0.4);
         if (rnd(1)) {
-            result.p_env_punch = frnd(0.3);
+            result.env_punch = frnd(0.3);
         }
         if (rnd(2) === 0) {
-            result.p_pha_offset = frnd(0.2);
-            result.p_pha_ramp = -frnd(0.2);
+            result.pha_offset = frnd(0.2);
+            result.pha_ramp = -frnd(0.2);
         }
         if (rnd(1)) {
-            result.p_hpf_freq = frnd(0.3);
+            result.hpf_freq = frnd(0.3);
         }
 
         return result;
@@ -165,34 +165,34 @@ function rngToParams(seed, rng) {
         var result = Params();
 
         if (rnd(1)) {
-            result.p_base_freq = 0.1 + frnd(0.4);
-            result.p_freq_ramp = -0.1 + frnd(0.4);
+            result.base_freq = 0.1 + frnd(0.4);
+            result.freq_ramp = -0.1 + frnd(0.4);
         } else {
-            result.p_base_freq = 0.2 + frnd(0.7);
-            result.p_freq_ramp = -0.2 - frnd(0.2);
+            result.base_freq = 0.2 + frnd(0.7);
+            result.freq_ramp = -0.2 - frnd(0.2);
         }
-        result.p_base_freq *= result.p_base_freq;
+        result.base_freq *= result.base_freq;
         if (rnd(4) === 0) {
-            result.p_freq_ramp = 0.0;
+            result.freq_ramp = 0.0;
         }
         if (rnd(2) === 0) {
-            result.p_repeat_speed = 0.3 + frnd(0.5);
+            result.repeat_speed = 0.3 + frnd(0.5);
         }
-        result.p_env_attack = 0.0;
-        result.p_env_sustain = 0.1 + frnd(0.3);
-        result.p_env_decay = frnd(0.5);
+        result.env_attack = 0.0;
+        result.env_sustain = 0.1 + frnd(0.3);
+        result.env_decay = frnd(0.5);
         if (rnd(1) === 0) {
-            result.p_pha_offset = -0.3 + frnd(0.9);
-            result.p_pha_ramp = -frnd(0.3);
+            result.pha_offset = -0.3 + frnd(0.9);
+            result.pha_ramp = -frnd(0.3);
         }
-        result.p_env_punch = 0.2 + frnd(0.6);
+        result.env_punch = 0.2 + frnd(0.6);
         if (rnd(1)) {
-            result.p_vib_strength = frnd(0.7);
-            result.p_vib_speed = frnd(0.6);
+            result.vib_strength = frnd(0.7);
+            result.vib_speed = frnd(0.6);
         }
         if (rnd(2) === 0) {
-            result.p_arp_speed = 0.6 + frnd(0.3);
-            result.p_arp_mod = 0.8 - frnd(1.6);
+            result.arp_speed = 0.6 + frnd(0.3);
+            result.arp_mod = 0.8 - frnd(1.6);
         }
 
         return result;
@@ -206,31 +206,31 @@ function rngToParams(seed, rng) {
             if (result.wave_type === 3) {
                 result.wave_type = SQUARE;
             }
-            result.p_env_attack = 0.4304400932967592 + frnd(0.2) - 0.1;
-            result.p_env_sustain = 0.15739346034252394 + frnd(0.2) - 0.1;
-            result.p_env_punch = 0.004488201744871758 + frnd(0.2) - 0.1;
-            result.p_env_decay = 0.07478075528212291 + frnd(0.2) - 0.1;
-            result.p_base_freq = 0.9865265720147687 + frnd(0.2) - 0.1;
-            result.p_freq_limit = 0 + frnd(0.2) - 0.1;
-            result.p_freq_ramp = -0.2995018224359539 + frnd(0.2) - 0.1;
+            result.env_attack = 0.4304400932967592 + frnd(0.2) - 0.1;
+            result.env_sustain = 0.15739346034252394 + frnd(0.2) - 0.1;
+            result.env_punch = 0.004488201744871758 + frnd(0.2) - 0.1;
+            result.env_decay = 0.07478075528212291 + frnd(0.2) - 0.1;
+            result.base_freq = 0.9865265720147687 + frnd(0.2) - 0.1;
+            result.freq_limit = 0 + frnd(0.2) - 0.1;
+            result.freq_ramp = -0.2995018224359539 + frnd(0.2) - 0.1;
             if (frnd(1.0) < 0.5) {
-                result.p_freq_ramp = 0.1 + frnd(0.15);
+                result.freq_ramp = 0.1 + frnd(0.15);
             }
-            result.p_freq_dramp = 0.004598608156964473 + frnd(0.1) - 0.05;
-            result.p_vib_strength = -0.2202799497929496 + frnd(0.2) - 0.1;
-            result.p_vib_speed = 0.8084998703158364 + frnd(0.2) - 0.1;
-            result.p_arp_mod = 0;
-            result.p_arp_speed = 0;
-            result.p_duty = -0.9031808754347107 + frnd(0.2) - 0.1;
-            result.p_duty_ramp = -0.8128699999808343 + frnd(0.2) - 0.1;
-            result.p_repeat_speed = 0.6014860189319991 + frnd(0.2) - 0.1;
-            result.p_pha_offset = -0.9424902314367765 + frnd(0.2) - 0.1;
-            result.p_pha_ramp = -0.1055482222272056 + frnd(0.2) - 0.1;
-            result.p_lpf_freq = 0.9989765717851521 + frnd(0.2) - 0.1;
-            result.p_lpf_ramp = -0.25051720626043017 + frnd(0.2) - 0.1;
-            result.p_lpf_resonance = 0.32777871505494693 + frnd(0.2) - 0.1;
-            result.p_hpf_freq = 0.0023548750981756753 + frnd(0.2) - 0.1;
-            result.p_hpf_ramp = -0.002375673204842568 + frnd(0.2) - 0.1;
+            result.freq_dramp = 0.004598608156964473 + frnd(0.1) - 0.05;
+            result.vib_strength = -0.2202799497929496 + frnd(0.2) - 0.1;
+            result.vib_speed = 0.8084998703158364 + frnd(0.2) - 0.1;
+            result.arp_mod = 0;
+            result.arp_speed = 0;
+            result.duty = -0.9031808754347107 + frnd(0.2) - 0.1;
+            result.duty_ramp = -0.8128699999808343 + frnd(0.2) - 0.1;
+            result.repeat_speed = 0.6014860189319991 + frnd(0.2) - 0.1;
+            result.pha_offset = -0.9424902314367765 + frnd(0.2) - 0.1;
+            result.pha_ramp = -0.1055482222272056 + frnd(0.2) - 0.1;
+            result.lpf_freq = 0.9989765717851521 + frnd(0.2) - 0.1;
+            result.lpf_ramp = -0.25051720626043017 + frnd(0.2) - 0.1;
+            result.lpf_resonance = 0.32777871505494693 + frnd(0.2) - 0.1;
+            result.hpf_freq = 0.0023548750981756753 + frnd(0.2) - 0.1;
+            result.hpf_ramp = -0.002375673204842568 + frnd(0.2) - 0.1;
             return result;
         }
 
@@ -239,28 +239,28 @@ function rngToParams(seed, rng) {
             if (result.wave_type === 3) {
                 result.wave_type = SQUARE;
             }
-            result.p_env_attack = 0.5277795946672003 + frnd(0.2) - 0.1;
-            result.p_env_sustain = 0.18243733568468432 + frnd(0.2) - 0.1;
-            result.p_env_punch = -0.020159754546840117 + frnd(0.2) - 0.1;
-            result.p_env_decay = 0.1561353422051903 + frnd(0.2) - 0.1;
-            result.p_base_freq = 0.9028855606533718 + frnd(0.2) - 0.1;
-            result.p_freq_limit = -0.008842787837148716;
-            result.p_freq_ramp = -0.1;
-            result.p_freq_dramp = -0.012891241489551925;
-            result.p_vib_strength = -0.17923136138403065 + frnd(0.2) - 0.1;
-            result.p_vib_speed = 0.908263385610142 + frnd(0.2) - 0.1;
-            result.p_arp_mod = 0.41690153355414894 + frnd(0.2) - 0.1;
-            result.p_arp_speed = 0.0010766233195860703 + frnd(0.2) - 0.1;
-            result.p_duty = -0.8735363011184684 + frnd(0.2) - 0.1;
-            result.p_duty_ramp = -0.7397985366747507 + frnd(0.2) - 0.1;
-            result.p_repeat_speed = 0.0591789344172107 + frnd(0.2) - 0.1;
-            result.p_pha_offset = -0.9961184222777699 + frnd(0.2) - 0.1;
-            result.p_pha_ramp = -0.08234769395850523 + frnd(0.2) - 0.1;
-            result.p_lpf_freq = 0.9412475115697335 + frnd(0.2) - 0.1;
-            result.p_lpf_ramp = -0.18261358925834958 + frnd(0.2) - 0.1;
-            result.p_lpf_resonance = 0.24541438107389477 + frnd(0.2) - 0.1;
-            result.p_hpf_freq = -0.01831940280978611 + frnd(0.2) - 0.1;
-            result.p_hpf_ramp = -0.03857383633171346 + frnd(0.2) - 0.1;
+            result.env_attack = 0.5277795946672003 + frnd(0.2) - 0.1;
+            result.env_sustain = 0.18243733568468432 + frnd(0.2) - 0.1;
+            result.env_punch = -0.020159754546840117 + frnd(0.2) - 0.1;
+            result.env_decay = 0.1561353422051903 + frnd(0.2) - 0.1;
+            result.base_freq = 0.9028855606533718 + frnd(0.2) - 0.1;
+            result.freq_limit = -0.008842787837148716;
+            result.freq_ramp = -0.1;
+            result.freq_dramp = -0.012891241489551925;
+            result.vib_strength = -0.17923136138403065 + frnd(0.2) - 0.1;
+            result.vib_speed = 0.908263385610142 + frnd(0.2) - 0.1;
+            result.arp_mod = 0.41690153355414894 + frnd(0.2) - 0.1;
+            result.arp_speed = 0.0010766233195860703 + frnd(0.2) - 0.1;
+            result.duty = -0.8735363011184684 + frnd(0.2) - 0.1;
+            result.duty_ramp = -0.7397985366747507 + frnd(0.2) - 0.1;
+            result.repeat_speed = 0.0591789344172107 + frnd(0.2) - 0.1;
+            result.pha_offset = -0.9961184222777699 + frnd(0.2) - 0.1;
+            result.pha_ramp = -0.08234769395850523 + frnd(0.2) - 0.1;
+            result.lpf_freq = 0.9412475115697335 + frnd(0.2) - 0.1;
+            result.lpf_ramp = -0.18261358925834958 + frnd(0.2) - 0.1;
+            result.lpf_resonance = 0.24541438107389477 + frnd(0.2) - 0.1;
+            result.hpf_freq = -0.01831940280978611 + frnd(0.2) - 0.1;
+            result.hpf_ramp = -0.03857383633171346 + frnd(0.2) - 0.1;
             return result;
 
         }
@@ -270,28 +270,28 @@ function rngToParams(seed, rng) {
             if (result.wave_type === 3) {
                 result.wave_type = SQUARE;
             }
-            result.p_env_attack = 0.4304400932967592 + frnd(0.2) - 0.1;
-            result.p_env_sustain = 0.15739346034252394 + frnd(0.2) - 0.1;
-            result.p_env_punch = 0.004488201744871758 + frnd(0.2) - 0.1;
-            result.p_env_decay = 0.07478075528212291 + frnd(0.2) - 0.1;
-            result.p_base_freq = 0.9865265720147687 + frnd(0.2) - 0.1;
-            result.p_freq_limit = 0 + frnd(0.2) - 0.1;
-            result.p_freq_ramp = -0.2995018224359539 + frnd(0.2) - 0.1;
-            result.p_freq_dramp = 0.004598608156964473 + frnd(0.2) - 0.1;
-            result.p_vib_strength = -0.2202799497929496 + frnd(0.2) - 0.1;
-            result.p_vib_speed = 0.8084998703158364 + frnd(0.2) - 0.1;
-            result.p_arp_mod = -0.46410459213693644 + frnd(0.2) - 0.1;
-            result.p_arp_speed = -0.10955361249587248 + frnd(0.2) - 0.1;
-            result.p_duty = -0.9031808754347107 + frnd(0.2) - 0.1;
-            result.p_duty_ramp = -0.8128699999808343 + frnd(0.2) - 0.1;
-            result.p_repeat_speed = 0.7014860189319991 + frnd(0.2) - 0.1;
-            result.p_pha_offset = -0.9424902314367765 + frnd(0.2) - 0.1;
-            result.p_pha_ramp = -0.1055482222272056 + frnd(0.2) - 0.1;
-            result.p_lpf_freq = 0.9989765717851521 + frnd(0.2) - 0.1;
-            result.p_lpf_ramp = -0.25051720626043017 + frnd(0.2) - 0.1;
-            result.p_lpf_resonance = 0.32777871505494693 + frnd(0.2) - 0.1;
-            result.p_hpf_freq = 0.0023548750981756753 + frnd(0.2) - 0.1;
-            result.p_hpf_ramp = -0.002375673204842568 + frnd(0.2) - 0.1;
+            result.env_attack = 0.4304400932967592 + frnd(0.2) - 0.1;
+            result.env_sustain = 0.15739346034252394 + frnd(0.2) - 0.1;
+            result.env_punch = 0.004488201744871758 + frnd(0.2) - 0.1;
+            result.env_decay = 0.07478075528212291 + frnd(0.2) - 0.1;
+            result.base_freq = 0.9865265720147687 + frnd(0.2) - 0.1;
+            result.freq_limit = 0 + frnd(0.2) - 0.1;
+            result.freq_ramp = -0.2995018224359539 + frnd(0.2) - 0.1;
+            result.freq_dramp = 0.004598608156964473 + frnd(0.2) - 0.1;
+            result.vib_strength = -0.2202799497929496 + frnd(0.2) - 0.1;
+            result.vib_speed = 0.8084998703158364 + frnd(0.2) - 0.1;
+            result.arp_mod = -0.46410459213693644 + frnd(0.2) - 0.1;
+            result.arp_speed = -0.10955361249587248 + frnd(0.2) - 0.1;
+            result.duty = -0.9031808754347107 + frnd(0.2) - 0.1;
+            result.duty_ramp = -0.8128699999808343 + frnd(0.2) - 0.1;
+            result.repeat_speed = 0.7014860189319991 + frnd(0.2) - 0.1;
+            result.pha_offset = -0.9424902314367765 + frnd(0.2) - 0.1;
+            result.pha_ramp = -0.1055482222272056 + frnd(0.2) - 0.1;
+            result.lpf_freq = 0.9989765717851521 + frnd(0.2) - 0.1;
+            result.lpf_ramp = -0.25051720626043017 + frnd(0.2) - 0.1;
+            result.lpf_resonance = 0.32777871505494693 + frnd(0.2) - 0.1;
+            result.hpf_freq = 0.0023548750981756753 + frnd(0.2) - 0.1;
+            result.hpf_ramp = -0.002375673204842568 + frnd(0.2) - 0.1;
             return result;
         }
         if (frnd(5) > 1) {
@@ -301,51 +301,51 @@ function rngToParams(seed, rng) {
                 result.wave_type = SQUARE;
             }
             if (rnd(1)) {
-                result.p_arp_mod = 0.2697849293151393 + frnd(0.2) - 0.1;
-                result.p_arp_speed = -0.3131172257760948 + frnd(0.2) - 0.1;
-                result.p_base_freq = 0.8090588299313949 + frnd(0.2) - 0.1;
-                result.p_duty = -0.6210022920964955 + frnd(0.2) - 0.1;
-                result.p_duty_ramp = -0.00043441813553182567 + frnd(0.2) - 0.1;
-                result.p_env_attack = 0.004321877246874195 + frnd(0.2) - 0.1;
-                result.p_env_decay = 0.1 + frnd(0.2) - 0.1;
-                result.p_env_punch = 0.061737781504416146 + frnd(0.2) - 0.1;
-                result.p_env_sustain = 0.4987252564798832 + frnd(0.2) - 0.1;
-                result.p_freq_dramp = 0.31700340314222614 + frnd(0.2) - 0.1;
-                result.p_freq_limit = 0 + frnd(0.2) - 0.1;
-                result.p_freq_ramp = -0.163380391341416 + frnd(0.2) - 0.1;
-                result.p_hpf_freq = 0.4709005021145149 + frnd(0.2) - 0.1;
-                result.p_hpf_ramp = 0.6924667290539194 + frnd(0.2) - 0.1;
-                result.p_lpf_freq = 0.8351398631384511 + frnd(0.2) - 0.1;
-                result.p_lpf_ramp = 0.36616557192873134 + frnd(0.2) - 0.1;
-                result.p_lpf_resonance = -0.08685777111664439 + frnd(0.2) - 0.1;
-                result.p_pha_offset = -0.036084571580025544 + frnd(0.2) - 0.1;
-                result.p_pha_ramp = -0.014806445085568108 + frnd(0.2) - 0.1;
-                result.p_repeat_speed = -0.8094368475518489 + frnd(0.2) - 0.1;
-                result.p_vib_speed = 0.4496665457171294 + frnd(0.2) - 0.1;
-                result.p_vib_strength = 0.23413762515532424 + frnd(0.2) - 0.1;
+                result.arp_mod = 0.2697849293151393 + frnd(0.2) - 0.1;
+                result.arp_speed = -0.3131172257760948 + frnd(0.2) - 0.1;
+                result.base_freq = 0.8090588299313949 + frnd(0.2) - 0.1;
+                result.duty = -0.6210022920964955 + frnd(0.2) - 0.1;
+                result.duty_ramp = -0.00043441813553182567 + frnd(0.2) - 0.1;
+                result.env_attack = 0.004321877246874195 + frnd(0.2) - 0.1;
+                result.env_decay = 0.1 + frnd(0.2) - 0.1;
+                result.env_punch = 0.061737781504416146 + frnd(0.2) - 0.1;
+                result.env_sustain = 0.4987252564798832 + frnd(0.2) - 0.1;
+                result.freq_dramp = 0.31700340314222614 + frnd(0.2) - 0.1;
+                result.freq_limit = 0 + frnd(0.2) - 0.1;
+                result.freq_ramp = -0.163380391341416 + frnd(0.2) - 0.1;
+                result.hpf_freq = 0.4709005021145149 + frnd(0.2) - 0.1;
+                result.hpf_ramp = 0.6924667290539194 + frnd(0.2) - 0.1;
+                result.lpf_freq = 0.8351398631384511 + frnd(0.2) - 0.1;
+                result.lpf_ramp = 0.36616557192873134 + frnd(0.2) - 0.1;
+                result.lpf_resonance = -0.08685777111664439 + frnd(0.2) - 0.1;
+                result.pha_offset = -0.036084571580025544 + frnd(0.2) - 0.1;
+                result.pha_ramp = -0.014806445085568108 + frnd(0.2) - 0.1;
+                result.repeat_speed = -0.8094368475518489 + frnd(0.2) - 0.1;
+                result.vib_speed = 0.4496665457171294 + frnd(0.2) - 0.1;
+                result.vib_strength = 0.23413762515532424 + frnd(0.2) - 0.1;
             } else {
-                result.p_arp_mod = -0.35697118026766184 + frnd(0.2) - 0.1;
-                result.p_arp_speed = 0.3581140690559588 + frnd(0.2) - 0.1;
-                result.p_base_freq = 1.3260897696157528 + frnd(0.2) - 0.1;
-                result.p_duty = -0.30984900436710694 + frnd(0.2) - 0.1;
-                result.p_duty_ramp = -0.0014374759133411626 + frnd(0.2) - 0.1;
-                result.p_env_attack = 0.3160357835682254 + frnd(0.2) - 0.1;
-                result.p_env_decay = 0.1 + frnd(0.2) - 0.1;
-                result.p_env_punch = 0.24323114016870148 + frnd(0.2) - 0.1;
-                result.p_env_sustain = 0.4 + frnd(0.2) - 0.1;
-                result.p_freq_dramp = 0.2866475886237244 + frnd(0.2) - 0.1;
-                result.p_freq_limit = 0 + frnd(0.2) - 0.1;
-                result.p_freq_ramp = -0.10956352368742976 + frnd(0.2) - 0.1;
-                result.p_hpf_freq = 0.20772718017889846 + frnd(0.2) - 0.1;
-                result.p_hpf_ramp = 0.1564090637378835 + frnd(0.2) - 0.1;
-                result.p_lpf_freq = 0.6021372770637031 + frnd(0.2) - 0.1;
-                result.p_lpf_ramp = 0.24016227139979027 + frnd(0.2) - 0.1;
-                result.p_lpf_resonance = -0.08787383821160144 + frnd(0.2) - 0.1;
-                result.p_pha_offset = -0.381597686151701 + frnd(0.2) - 0.1;
-                result.p_pha_ramp = -0.0002481687661373495 + frnd(0.2) - 0.1;
-                result.p_repeat_speed = 0.07812112809425686 + frnd(0.2) - 0.1;
-                result.p_vib_speed = -0.13648848579133943 + frnd(0.2) - 0.1;
-                result.p_vib_strength = 0.0018874158972302657 + frnd(0.2) - 0.1;
+                result.arp_mod = -0.35697118026766184 + frnd(0.2) - 0.1;
+                result.arp_speed = 0.3581140690559588 + frnd(0.2) - 0.1;
+                result.base_freq = 1.3260897696157528 + frnd(0.2) - 0.1;
+                result.duty = -0.30984900436710694 + frnd(0.2) - 0.1;
+                result.duty_ramp = -0.0014374759133411626 + frnd(0.2) - 0.1;
+                result.env_attack = 0.3160357835682254 + frnd(0.2) - 0.1;
+                result.env_decay = 0.1 + frnd(0.2) - 0.1;
+                result.env_punch = 0.24323114016870148 + frnd(0.2) - 0.1;
+                result.env_sustain = 0.4 + frnd(0.2) - 0.1;
+                result.freq_dramp = 0.2866475886237244 + frnd(0.2) - 0.1;
+                result.freq_limit = 0 + frnd(0.2) - 0.1;
+                result.freq_ramp = -0.10956352368742976 + frnd(0.2) - 0.1;
+                result.hpf_freq = 0.20772718017889846 + frnd(0.2) - 0.1;
+                result.hpf_ramp = 0.1564090637378835 + frnd(0.2) - 0.1;
+                result.lpf_freq = 0.6021372770637031 + frnd(0.2) - 0.1;
+                result.lpf_ramp = 0.24016227139979027 + frnd(0.2) - 0.1;
+                result.lpf_resonance = -0.08787383821160144 + frnd(0.2) - 0.1;
+                result.pha_offset = -0.381597686151701 + frnd(0.2) - 0.1;
+                result.pha_ramp = -0.0002481687661373495 + frnd(0.2) - 0.1;
+                result.repeat_speed = 0.07812112809425686 + frnd(0.2) - 0.1;
+                result.vib_speed = -0.13648848579133943 + frnd(0.2) - 0.1;
+                result.vib_strength = 0.0018874158972302657 + frnd(0.2) - 0.1;
             }
             return result;
 
@@ -355,34 +355,34 @@ function rngToParams(seed, rng) {
         if (result.wave_type === 1 || result.wave_type === 3) {
             result.wave_type = 2;
         }
-        result.p_base_freq = 0.85 + frnd(0.15);
-        result.p_freq_ramp = 0.3 + frnd(0.15);
+        result.base_freq = 0.85 + frnd(0.15);
+        result.freq_ramp = 0.3 + frnd(0.15);
 
-        result.p_env_attack = 0 + frnd(0.09);
-        result.p_env_sustain = 0.2 + frnd(0.3);
-        result.p_env_decay = 0 + frnd(0.1);
+        result.env_attack = 0 + frnd(0.09);
+        result.env_sustain = 0.2 + frnd(0.3);
+        result.env_decay = 0 + frnd(0.1);
 
-        result.p_duty = frnd(2.0) - 1.0;
-        result.p_duty_ramp = Math.pow(frnd(2.0) - 1.0, 3.0);
-
-
-        result.p_repeat_speed = 0.5 + frnd(0.1);
-
-        result.p_pha_offset = -0.3 + frnd(0.9);
-        result.p_pha_ramp = -frnd(0.3);
-
-        result.p_arp_speed = 0.4 + frnd(0.6);
-        result.p_arp_mod = 0.8 + frnd(0.1);
+        result.duty = frnd(2.0) - 1.0;
+        result.duty_ramp = Math.pow(frnd(2.0) - 1.0, 3.0);
 
 
-        result.p_lpf_resonance = frnd(2.0) - 1.0;
-        result.p_lpf_freq = 1.0 - Math.pow(frnd(1.0), 3.0);
-        result.p_lpf_ramp = Math.pow(frnd(2.0) - 1.0, 3.0);
-        if (result.p_lpf_freq < 0.1 && result.p_lpf_ramp < -0.05) {
-            result.p_lpf_ramp = -result.p_lpf_ramp;
+        result.repeat_speed = 0.5 + frnd(0.1);
+
+        result.pha_offset = -0.3 + frnd(0.9);
+        result.pha_ramp = -frnd(0.3);
+
+        result.arp_speed = 0.4 + frnd(0.6);
+        result.arp_mod = 0.8 + frnd(0.1);
+
+
+        result.lpf_resonance = frnd(2.0) - 1.0;
+        result.lpf_freq = 1.0 - Math.pow(frnd(1.0), 3.0);
+        result.lpf_ramp = Math.pow(frnd(2.0) - 1.0, 3.0);
+        if (result.lpf_freq < 0.1 && result.lpf_ramp < -0.05) {
+            result.lpf_ramp = -result.lpf_ramp;
         }
-        result.p_hpf_freq = Math.pow(frnd(1.0), 5.0);
-        result.p_hpf_ramp = Math.pow(frnd(2.0) - 1.0, 5.0);
+        result.hpf_freq = Math.pow(frnd(1.0), 5.0);
+        result.hpf_ramp = Math.pow(frnd(2.0) - 1.0, 5.0);
 
         return result;
     }
@@ -397,18 +397,18 @@ function rngToParams(seed, rng) {
             result.wave_type = NOISE;
         }
 
-        result.p_base_freq = 0.1 + frnd(0.4);
-        result.p_freq_ramp = 0.05 + frnd(0.2);
+        result.base_freq = 0.1 + frnd(0.4);
+        result.freq_ramp = 0.05 + frnd(0.2);
 
-        result.p_env_attack = 0.01 + frnd(0.09);
-        result.p_env_sustain = 0.01 + frnd(0.09);
-        result.p_env_decay = 0.01 + frnd(0.09);
+        result.env_attack = 0.01 + frnd(0.09);
+        result.env_sustain = 0.01 + frnd(0.09);
+        result.env_decay = 0.01 + frnd(0.09);
 
-        result.p_repeat_speed = 0.3 + frnd(0.5);
-        result.p_pha_offset = -0.3 + frnd(0.9);
-        result.p_pha_ramp = -frnd(0.3);
-        result.p_arp_speed = 0.6 + frnd(0.3);
-        result.p_arp_mod = 0.8 - frnd(1.6);
+        result.repeat_speed = 0.3 + frnd(0.5);
+        result.pha_offset = -0.3 + frnd(0.9);
+        result.pha_ramp = -frnd(0.3);
+        result.arp_speed = 0.6 + frnd(0.3);
+        result.arp_mod = 0.8 - frnd(1.6);
 
         return result;
     }
@@ -418,27 +418,27 @@ function rngToParams(seed, rng) {
         if (rnd(1)) {
             result.wave_type = SAWTOOTH;
         } else {
-            result.p_duty = frnd(0.6);
+            result.duty = frnd(0.6);
         }
         result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
         if (result.wave_type === 3) {
             result.wave_type = SQUARE;
         }
         if (rnd(1)) {
-            result.p_base_freq = 0.2 + frnd(0.3);
-            result.p_freq_ramp = 0.1 + frnd(0.4);
-            result.p_repeat_speed = 0.4 + frnd(0.4);
+            result.base_freq = 0.2 + frnd(0.3);
+            result.freq_ramp = 0.1 + frnd(0.4);
+            result.repeat_speed = 0.4 + frnd(0.4);
         } else {
-            result.p_base_freq = 0.2 + frnd(0.3);
-            result.p_freq_ramp = 0.05 + frnd(0.2);
+            result.base_freq = 0.2 + frnd(0.3);
+            result.freq_ramp = 0.05 + frnd(0.2);
             if (rnd(1)) {
-                result.p_vib_strength = frnd(0.7);
-                result.p_vib_speed = frnd(0.6);
+                result.vib_strength = frnd(0.7);
+                result.vib_speed = frnd(0.6);
             }
         }
-        result.p_env_attack = 0.0;
-        result.p_env_sustain = frnd(0.4);
-        result.p_env_decay = 0.1 + frnd(0.4);
+        result.env_attack = 0.0;
+        result.env_sustain = frnd(0.4);
+        result.env_decay = 0.1 + frnd(0.4);
 
         return result;
     }
@@ -450,16 +450,16 @@ function rngToParams(seed, rng) {
             result.wave_type = NOISE;
         }
         if (result.wave_type === SQUARE) {
-            result.p_duty = frnd(0.6);
+            result.duty = frnd(0.6);
         }
         result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
-        result.p_base_freq = 0.2 + frnd(0.6);
-        result.p_freq_ramp = -0.3 - frnd(0.4);
-        result.p_env_attack = 0.0;
-        result.p_env_sustain = frnd(0.1);
-        result.p_env_decay = 0.1 + frnd(0.2);
+        result.base_freq = 0.2 + frnd(0.6);
+        result.freq_ramp = -0.3 - frnd(0.4);
+        result.env_attack = 0.0;
+        result.env_sustain = frnd(0.1);
+        result.env_decay = 0.1 + frnd(0.2);
         if (rnd(1)) {
-            result.p_hpf_freq = frnd(0.3);
+            result.hpf_freq = frnd(0.3);
         }
         return result;
     }
@@ -471,17 +471,17 @@ function rngToParams(seed, rng) {
         if (result.wave_type === 3) {
             result.wave_type = SQUARE;
         }
-        result.p_duty = frnd(0.6);
-        result.p_base_freq = 0.3 + frnd(0.3);
-        result.p_freq_ramp = 0.1 + frnd(0.2);
-        result.p_env_attack = 0.0;
-        result.p_env_sustain = 0.1 + frnd(0.3);
-        result.p_env_decay = 0.1 + frnd(0.2);
+        result.duty = frnd(0.6);
+        result.base_freq = 0.3 + frnd(0.3);
+        result.freq_ramp = 0.1 + frnd(0.2);
+        result.env_attack = 0.0;
+        result.env_sustain = 0.1 + frnd(0.3);
+        result.env_decay = 0.1 + frnd(0.2);
         if (rnd(1)) {
-            result.p_hpf_freq = frnd(0.3);
+            result.hpf_freq = frnd(0.3);
         }
         if (rnd(1)) {
-            result.p_lpf_freq = 1.0 - frnd(0.6);
+            result.lpf_freq = 1.0 - frnd(0.6);
         }
         return result;
     }
@@ -494,57 +494,57 @@ function rngToParams(seed, rng) {
             result.wave_type = rnd(1);
         }
         if (result.wave_type === SQUARE) {
-            result.p_duty = frnd(0.6);
+            result.duty = frnd(0.6);
         }
-        result.p_base_freq = 0.2 + frnd(0.4);
-        result.p_env_attack = 0.0;
-        result.p_env_sustain = 0.1 + frnd(0.1);
-        result.p_env_decay = frnd(0.2);
-        result.p_hpf_freq = 0.1;
+        result.base_freq = 0.2 + frnd(0.4);
+        result.env_attack = 0.0;
+        result.env_sustain = 0.1 + frnd(0.1);
+        result.env_decay = frnd(0.2);
+        result.hpf_freq = 0.1;
         return result;
     }
 
     function random() {
         result = Params();
         result.wave_type = Math.floor(frnd(NUM_WAVE_TYPES));
-        result.p_base_freq = Math.pow(frnd(2.0) - 1.0, 2.0);
+        result.base_freq = Math.pow(frnd(2.0) - 1.0, 2.0);
         if (rnd(1)) {
-            result.p_base_freq = Math.pow(frnd(2.0) - 1.0, 3.0) + 0.5;
+            result.base_freq = Math.pow(frnd(2.0) - 1.0, 3.0) + 0.5;
         }
-        result.p_freq_limit = 0.0;
-        result.p_freq_ramp = Math.pow(frnd(2.0) - 1.0, 5.0);
-        if (result.p_base_freq > 0.7 && result.p_freq_ramp > 0.2) {
-            result.p_freq_ramp = -result.p_freq_ramp;
+        result.freq_limit = 0.0;
+        result.freq_ramp = Math.pow(frnd(2.0) - 1.0, 5.0);
+        if (result.base_freq > 0.7 && result.freq_ramp > 0.2) {
+            result.freq_ramp = -result.freq_ramp;
         }
-        if (result.p_base_freq < 0.2 && result.p_freq_ramp < -0.05) {
-            result.p_freq_ramp = -result.p_freq_ramp;
+        if (result.base_freq < 0.2 && result.freq_ramp < -0.05) {
+            result.freq_ramp = -result.freq_ramp;
         }
-        result.p_freq_dramp = Math.pow(frnd(2.0) - 1.0, 3.0);
-        result.p_duty = frnd(2.0) - 1.0;
-        result.p_duty_ramp = Math.pow(frnd(2.0) - 1.0, 3.0);
-        result.p_vib_strength = Math.pow(frnd(2.0) - 1.0, 3.0);
-        result.p_vib_speed = frnd(2.0) - 1.0;
-        result.p_env_attack = Math.pow(frnd(2.0) - 1.0, 3.0);
-        result.p_env_sustain = Math.pow(frnd(2.0) - 1.0, 2.0);
-        result.p_env_decay = frnd(2.0) - 1.0;
-        result.p_env_punch = Math.pow(frnd(0.8), 2.0);
-        if (result.p_env_attack + result.p_env_sustain + result.p_env_decay < 0.2) {
-            result.p_env_sustain += 0.2 + frnd(0.3);
-            result.p_env_decay += 0.2 + frnd(0.3);
+        result.freq_dramp = Math.pow(frnd(2.0) - 1.0, 3.0);
+        result.duty = frnd(2.0) - 1.0;
+        result.duty_ramp = Math.pow(frnd(2.0) - 1.0, 3.0);
+        result.vib_strength = Math.pow(frnd(2.0) - 1.0, 3.0);
+        result.vib_speed = frnd(2.0) - 1.0;
+        result.env_attack = Math.pow(frnd(2.0) - 1.0, 3.0);
+        result.env_sustain = Math.pow(frnd(2.0) - 1.0, 2.0);
+        result.env_decay = frnd(2.0) - 1.0;
+        result.env_punch = Math.pow(frnd(0.8), 2.0);
+        if (result.env_attack + result.env_sustain + result.env_decay < 0.2) {
+            result.env_sustain += 0.2 + frnd(0.3);
+            result.env_decay += 0.2 + frnd(0.3);
         }
-        result.p_lpf_resonance = frnd(2.0) - 1.0;
-        result.p_lpf_freq = 1.0 - Math.pow(frnd(1.0), 3.0);
-        result.p_lpf_ramp = Math.pow(frnd(2.0) - 1.0, 3.0);
-        if (result.p_lpf_freq < 0.1 && result.p_lpf_ramp < -0.05) {
-            result.p_lpf_ramp = -result.p_lpf_ramp;
+        result.lpf_resonance = frnd(2.0) - 1.0;
+        result.lpf_freq = 1.0 - Math.pow(frnd(1.0), 3.0);
+        result.lpf_ramp = Math.pow(frnd(2.0) - 1.0, 3.0);
+        if (result.lpf_freq < 0.1 && result.lpf_ramp < -0.05) {
+            result.lpf_ramp = -result.lpf_ramp;
         }
-        result.p_hpf_freq = Math.pow(frnd(1.0), 5.0);
-        result.p_hpf_ramp = Math.pow(frnd(2.0) - 1.0, 5.0);
-        result.p_pha_offset = Math.pow(frnd(2.0) - 1.0, 3.0);
-        result.p_pha_ramp = Math.pow(frnd(2.0) - 1.0, 3.0);
-        result.p_repeat_speed = frnd(2.0) - 1.0;
-        result.p_arp_speed = frnd(2.0) - 1.0;
-        result.p_arp_mod = frnd(2.0) - 1.0;
+        result.hpf_freq = Math.pow(frnd(1.0), 5.0);
+        result.hpf_ramp = Math.pow(frnd(2.0) - 1.0, 5.0);
+        result.pha_offset = Math.pow(frnd(2.0) - 1.0, 3.0);
+        result.pha_ramp = Math.pow(frnd(2.0) - 1.0, 3.0);
+        result.repeat_speed = frnd(2.0) - 1.0;
+        result.arp_speed = frnd(2.0) - 1.0;
+        result.arp_mod = frnd(2.0) - 1.0;
         return result;
     }
 
@@ -595,43 +595,43 @@ function Params() {
         wave_type: SQUARE,
 
         // Envelope
-        p_env_attack: 0,     // Attack time
-        p_env_sustain: 0.3,  // Sustain time
-        p_env_punch: 0,      // Sustain punch
-        p_env_decay: 0.4,    // Decay time
+        env_attack: 0,     // Attack time
+        env_sustain: 0.3,  // Sustain time
+        env_punch: 0,      // Sustain punch
+        env_decay: 0.4,    // Decay time
 
         // Tone
-        p_base_freq: 0.3,    // Start frequency
-        p_freq_limit: 0,     // Min frequency cutoff
-        p_freq_ramp: 0,      // Slide (SIGNED)
-        p_freq_dramp: 0,     // Delta slide (SIGNED)
+        base_freq: 0.3,    // Start frequency
+        freq_limit: 0,     // Min frequency cutoff
+        freq_ramp: 0,      // Slide (SIGNED)
+        freq_dramp: 0,     // Delta slide (SIGNED)
 
         // Vibrato
-        p_vib_strength: 0,   // Vibrato depth
-        p_vib_speed: 0,      // Vibrato speed
+        vib_strength: 0,   // Vibrato depth
+        vib_speed: 0,      // Vibrato speed
 
         // Tonal change
-        p_arp_mod: 0,        // Change amount (SIGNED)
-        p_arp_speed: 0,      // Change speed
+        arp_mod: 0,        // Change amount (SIGNED)
+        arp_speed: 0,      // Change speed
 
         // Duty (affects the timbre of SQUARE waves)
-        p_duty: 0,           // Square duty
-        p_duty_ramp: 0,      // Duty sweep (SIGNED)
+        duty: 0,           // Square duty
+        duty_ramp: 0,      // Duty sweep (SIGNED)
 
         // Repeat
-        p_repeat_speed: 0,   // Repeat speed
+        repeat_speed: 0,   // Repeat speed
 
         // Phaser
-        p_pha_offset: 0,     // Phaser offset (SIGNED)
-        p_pha_ramp: 0,       // Phaser sweep (SIGNED)
+        pha_offset: 0,     // Phaser offset (SIGNED)
+        pha_ramp: 0,       // Phaser sweep (SIGNED)
 
         // Low-pass filter
-        p_lpf_freq: 1.0,     // Low-pass filter cutoff
-        p_lpf_ramp: 0,       // Low-pass filter cutoff sweep (SIGNED)
-        p_lpf_resonance: 0,  // Low-pass filter resonance
+        lpf_freq: 1.0,     // Low-pass filter cutoff
+        lpf_ramp: 0,       // Low-pass filter cutoff sweep (SIGNED)
+        lpf_resonance: 0,  // Low-pass filter resonance
         // High-pass filter
-        p_hpf_freq: 0,       // High-pass filter cutoff
-        p_hpf_ramp: 0,       // High-pass filter cutoff sweep (SIGNED)
+        hpf_freq: 0,       // High-pass filter cutoff
+        hpf_ramp: 0,       // High-pass filter cutoff sweep (SIGNED)
 
         // Sample parameters
         sound_vol: 0.5,
@@ -662,18 +662,18 @@ var SUPERSAMPLES = 8;
 function env_lengths(params, rate) {
     var f = rate * (100000.0 / 44100.0);
     return [
-        Math.floor(f * params.p_env_attack * params.p_env_attack),
-        Math.floor(f * params.p_env_sustain * params.p_env_sustain),
-        Math.floor(f * params.p_env_decay * params.p_env_decay)
+        Math.floor(f * params.env_attack * params.env_attack),
+        Math.floor(f * params.env_sustain * params.env_sustain),
+        Math.floor(f * params.env_decay * params.env_decay)
     ];
 }
 
 // The beginning of the synthesizer pipeline. Generate a time series, at
 // 44100 Hz, that indicates the frequency of the sound at each moment.  The
-// starting frequency is params.p_base_freq, but other parameters can make the
+// starting frequency is params.base_freq, but other parameters can make the
 // frequency slide or oscillate.
 //
-// Parameters: p_repeat_speed, p_base_freq, p_freq_limit, p_freq_ramp, p_freq_dramp;
+// Parameters: repeat_speed, base_freq, freq_limit, freq_ramp, freq_dramp;
 // also the envelope parameters, but only to determine the duration of the sound.
 function computePeriodSamples(params) {
     // Determine buffer size and allocate the array.
@@ -681,21 +681,21 @@ function computePeriodSamples(params) {
     var len = (env_length[0] + env_length[1] + env_length[2]);
     var buffer = new Float64Array(len);
 
-    // Determine whether params.p_repeat_speed comes into play.
+    // Determine whether params.repeat_speed comes into play.
     // t_limit is the number of samples computed by the compute loop below.
     var t_limit = len;
-    var rep_period = (params.p_repeat_speed == 0.0)
+    var reperiod = (params.repeat_speed == 0.0)
                      ? 0
-                     : Math.floor(Math.pow(1.0 - params.p_repeat_speed, 2.0) * 20000 + 32);
-    if (rep_period != 0 && rep_period < t_limit) {
-        t_limit = rep_period;
+                     : Math.floor(Math.pow(1.0 - params.repeat_speed, 2.0) * 20000 + 32);
+    if (reperiod != 0 && reperiod < t_limit) {
+        t_limit = reperiod;
     }
 
     // Frequency slide parameters.
-    var fperiod = 100.0 / (params.p_base_freq * params.p_base_freq + 0.001);
-    var fmaxperiod = 100.0 / (params.p_freq_limit * params.p_freq_limit + 0.001);
-    var fslide = 1.0 - Math.pow(params.p_freq_ramp, 3.0) * 0.01;
-    var fdslide = -Math.pow(params.p_freq_dramp, 3.0) * 0.000001;
+    var fperiod = 100.0 / (params.base_freq * params.base_freq + 0.001);
+    var fmaxperiod = 100.0 / (params.freq_limit * params.freq_limit + 0.001);
+    var fslide = 1.0 - Math.pow(params.freq_ramp, 3.0) * 0.01;
+    var fdslide = -Math.pow(params.freq_dramp, 3.0) * 0.000001;
 
     // Frequency compute loop.
     var t;
@@ -705,7 +705,7 @@ function computePeriodSamples(params) {
         fperiod *= fslide;
         if (fperiod > fmaxperiod) {
             fperiod = fmaxperiod;
-            if (params.p_freq_limit > 0.0) {
+            if (params.freq_limit > 0.0) {
                 return buffer.subarray(0, t);
             }
         }
@@ -715,7 +715,7 @@ function computePeriodSamples(params) {
 
     // Repeat the computed data to fill the buffer.
     for (; t < len; t++) {
-        buffer[t] = buffer[t - rep_period];
+        buffer[t] = buffer[t - reperiod];
     }
 
     return buffer;
@@ -724,22 +724,22 @@ function computePeriodSamples(params) {
 // In sythesizers, "arpeggio" means an abrupt change in frequency during a
 // sound. This synthesizer only supports a single cutoff point.
 //
-// Parameters: p_arp_speed, p_arp_mod
+// Parameters: arp_speed, arp_mod
 function applyArpeggio(params, periodSamples) {
     var len = periodSamples.length;
-    var arp_time = Math.floor(Math.pow(1.0 - params.p_arp_speed, 2.0) * 20000 + 32);
-    if (params.p_arp_mod === 0.0 || arp_time >= len) {
+    var artime = Math.floor(Math.pow(1.0 - params.arp_speed, 2.0) * 20000 + 32);
+    if (params.arp_mod === 0.0 || artime >= len) {
         // No arpeggio. The algorithm below will produce an exact copy
         // of the input. Don't bother.
         return periodSamples;
     }
 
-    var arp_mod = (params.p_arp_mod >= 0.0)
-                  ? 1.0 - Math.pow(params.p_arp_mod, 2.0) * 0.9
-                  : 1.0 + Math.pow(params.p_arp_mod, 2.0) * 10.0;
+    var arp_mod = (params.arp_mod >= 0.0)
+                  ? 1.0 - Math.pow(params.arp_mod, 2.0) * 0.9
+                  : 1.0 + Math.pow(params.arp_mod, 2.0) * 10.0;
 
     var out = new Float64Array(len);
-    for (var i = 0; i < arp_time; i++) {
+    for (var i = 0; i < artime; i++) {
         out[i] = periodSamples[i];
     }
     for (; i < len; i++) {
@@ -751,17 +751,17 @@ function applyArpeggio(params, periodSamples) {
 // I'm used to "vibrato" meaning oscillation in volume, but here "vib" is an
 // oscillation in pitch.
 //
-// Parameters: p_vib_strength, p_vib_speed
+// Parameters: vib_strength, vib_speed
 function applyVibrato(params, periodSamples) {
-    if (params.p_vib_speed === 0 || params.p_vib_strength === 0) {
+    if (params.vib_speed === 0 || params.vib_strength === 0) {
         // No vibrato. Rather than waste time computing an exact copy of the
         // input, just return it unchanged.
         return periodSamples;
     }
 
     var vib_phase = 0.0;
-    var vib_speed = Math.pow(params.p_vib_speed, 2.0) * 0.01;
-    var vib_amp = params.p_vib_strength * 0.5;
+    var vib_speed = Math.pow(params.vib_speed, 2.0) * 0.01;
+    var vib_amp = params.vib_strength * 0.5;
 
     var len = periodSamples.length;
     var out = new Float64Array(len);
@@ -810,14 +810,14 @@ function stretch(N, samples) {
 // is to change over time, and generate actual sampled audio data by applying
 // a waveform.
 //
-// Parameters: wave_type, p_duty, p_duty_ramp
+// Parameters: wave_type, duty, duty_ramp
 function applyBaseWaveform(params, periodSamples) {
     var type = params.wave_type;
 
     // Square duty
     // BUG: This should reset when repeat() fires.
-    var square_duty = 0.5 - params.p_duty * 0.5;
-    var square_slide = -params.p_duty_ramp * 0.00005 / SUPERSAMPLES;
+    var square_duty = 0.5 - params.duty * 0.5;
+    var square_slide = -params.duty_ramp * 0.00005 / SUPERSAMPLES;
 
     // Noise
     var noise_buffer = [];
@@ -879,17 +879,17 @@ function applyBaseWaveform(params, periodSamples) {
 // filter; the way the rest of the synthesizer is constructed, it seems like it
 // shouldn't be necessary.
 //
-// Parameters: p_lpf_freq, p_lpf_ramp, p_lpf_resonance, p_hpf_freq, p_hpf_ramp
+// Parameters: lpf_freq, lpf_ramp, lpf_resonance, hpf_freq, hpf_ramp
 function applyFilters(params, samples) {
     var fltp = 0.0;
     var fltdp = 0.0;
-    var fltw = Math.pow(params.p_lpf_freq, 3.0) * 0.1;
-    var fltw_d = 1.0 + params.p_lpf_ramp * 0.0001;
+    var fltw = Math.pow(params.lpf_freq, 3.0) * 0.1;
+    var fltw_d = 1.0 + params.lpf_ramp * 0.0001;
     var fltdmp =
-        5.0 / (1.0 + Math.pow(params.p_lpf_resonance, 2.0) * 20.0) * (0.01 + fltw);
+        5.0 / (1.0 + Math.pow(params.lpf_resonance, 2.0) * 20.0) * (0.01 + fltw);
     if (fltdmp > 0.8) fltdmp = 0.8;
-    var flthp = Math.pow(params.p_hpf_freq, 2.0) * 0.1;  // function of i and flthp_d
-    var flthp_d = Math.pow(1.0 + params.p_hpf_ramp * 0.0003, 1 / SUPERSAMPLES);  // constant
+    var flthp = Math.pow(params.hpf_freq, 2.0) * 0.1;  // function of i and flthd
+    var flthd = Math.pow(1.0 + params.hpf_ramp * 0.0003, 1 / SUPERSAMPLES);  // constant
 
     var len = samples.length;
     var out = new Float64Array(len);
@@ -902,7 +902,7 @@ function applyFilters(params, samples) {
         fltw *= fltw_d;
         if (fltw < 0.0) fltw = 0.0;
         if (fltw > 0.1) fltw = 0.1;
-        if (params.p_lpf_freq != 1.0) {
+        if (params.lpf_freq != 1.0) {
             fltdp += (y - fltp) * fltw;
             fltdp -= fltdp * fltdmp;
         } else {
@@ -912,8 +912,8 @@ function applyFilters(params, samples) {
         fltp += fltdp;
 
         // High-pass filter
-        if (flthp_d !== 1.0) {
-            flthp *= flthp_d;
+        if (flthd !== 1.0) {
+            flthp *= flthd;
             if (flthp < 0.00001) flthp = 0.00001;
             if (flthp > 0.1) flthp = 0.1;
         }
@@ -931,7 +931,7 @@ function applyFilters(params, samples) {
 // Params. The distortion is slight--more noticeably, this doubles the
 // amplitude (volume) of the sound.
 //
-// Parameters: p_pha_offset, p_pha_ramp
+// Parameters: pha_offset, pha_ramp
 function applyPhaser(params, samples) {
     var SAMPLE_RATE = SUPERSAMPLES * 44100;
     var PHASER_SIZE = Math.floor(SAMPLE_RATE * 0.0029);
@@ -940,11 +940,11 @@ function applyPhaser(params, samples) {
         phaser_buffer[i] = 0.0;
     }
 
-    var fphase = Math.pow(params.p_pha_offset, 2.0) * (255 / 256 * PHASER_SIZE);
-    if (params.p_pha_offset < 0.0) fphase = -fphase;
+    var fphase = Math.pow(params.pha_offset, 2.0) * (255 / 256 * PHASER_SIZE);
+    if (params.pha_offset < 0.0) fphase = -fphase;
 
-    var fdphase = Math.pow(params.p_pha_ramp, 2.0) * 44100 / SAMPLE_RATE;
-    if (params.p_pha_ramp < 0.0) fdphase = -fdphase;
+    var fdphase = Math.pow(params.pha_ramp, 2.0) * 44100 / SAMPLE_RATE;
+    if (params.pha_ramp < 0.0) fdphase = -fdphase;
 
     var len = samples.length;
     var out = new Float64Array(len);
@@ -995,7 +995,7 @@ function mul(A, B) {
 // maximum volume; whether it stops abruptly or fades out; and its overall
 // volume.
 //
-// Parameters: sound_vol, p_env_attack, p_env_sustain, p_env_punch, p_env_decay
+// Parameters: sound_vol, env_attack, env_sustain, env_punch, env_decay
 function applyEnvelope(params, samples) {
     var gain = Math.exp(params.sound_vol) - 1;
     var env_length = env_lengths(params, params.sample_rate);
@@ -1010,7 +1010,7 @@ function applyEnvelope(params, samples) {
 
     // Sustain phase.
     for (var ts = 0; ts < sustain_len; ts++) {
-        env[t++] = gain * (1.0 + (1.0 - ts / sustain_len) * 2.0 * params.p_env_punch);
+        env[t++] = gain * (1.0 + (1.0 - ts / sustain_len) * 2.0 * params.env_punch);
     }
 
     // Decay phase.
