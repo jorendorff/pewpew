@@ -45,6 +45,10 @@ var SynthUI = (function () {
             name: "Vibrato speed"
         },
         {
+            id: "repeat_speed",
+            name: "Repeat speed"
+        },
+        {
             id: "arp_speed",
             name: "Arpeggio speed"
         },
@@ -61,10 +65,6 @@ var SynthUI = (function () {
             id: "duty_ramp",
             name: "Square duty ramp",
             signed: true
-        },
-        {
-            id: "repeat_speed",
-            name: "Repeat speed"
         },
         {
             id: "pha_offset",
@@ -104,30 +104,29 @@ var SynthUI = (function () {
         }
     ];
 
-    // Slider resolution: jQuery sliders are integer-valued, so we have
-    // to specify how many ticks we want. Here, 1000 for unsigned
-    // parameters, 2000 for signed.
-    var SLIDER_RES = 1000;
-
     function initControlTable() {
         var defaults = Params();
 
-        var tbody = $("#controltbody");
+        var tbody = document.getElementById("controltbody");
         for (var i = 0; i < param_info.length; i++) {
             var p = param_info[i];
-            var td = $("<td></td>");
-            td.text(p.name);
-            var slider = $("<td><div class='s' id='" + p.id + "'></div></td>");
-            var row = $("<tr></tr>");
-            row.append(td, slider);
-            tbody.append(row);
-            $("#" + p.id).slider({
-                max: SLIDER_RES,
-                min: p.signed ? -SLIDER_RES : 0,
-                value: defaults[p.id] * SLIDER_RES,
-                slide: onChange,
-                change: onChange
-            });
+            var nameCell = document.createElement("td");
+            nameCell.appendChild(document.createTextNode(p.name));
+            var sliderCell = document.createElement("td");
+            var slider = document.createElement("input");
+            slider.id = p.id;
+            slider.className = "slider";
+            slider.type = "range";
+            slider.max = 1;
+            slider.min = p.signed ? -1 : 0;
+            slider.step = 1/1000;
+            slider.value = defaults[p.id];
+            slider.addEventListener("input", onChange);
+            sliderCell.appendChild(slider);
+            var row = document.createElement("tr");
+            row.appendChild(nameCell);
+            row.appendChild(sliderCell);
+            tbody.appendChild(row);
         }
     }
 
@@ -139,7 +138,7 @@ var SynthUI = (function () {
 
         for (var i = 0; i < param_info.length; i++) {
             var pi = param_info[i];
-            params[pi.id] = $("#" + pi.id).slider("value") / SLIDER_RES;
+            params[pi.id] = document.getElementById(pi.id).value;
         }
         return params;
     }
@@ -148,8 +147,7 @@ var SynthUI = (function () {
         // Change all the controls to reflect the given params
         for (var i = 0; i < param_info.length; i++) {
             var p = param_info[i];
-            onChange.disabled++;
-            $("#" + p.id).slider("value", params[p.id] * SLIDER_RES);
+            document.getElementById(p.id).value = params[p.id];
         }
     }
 
@@ -158,16 +156,11 @@ var SynthUI = (function () {
 
         var counter = ++onChange.counter;
         setTimeout(function () {
-            if (onChange.disabled !== 0) {
-                onChange.disabled--;
-            } else {
-                if (onChange.counter === counter)
-                    playParams(getParamsFromControls());
-            }
+            if (onChange.counter === counter)
+                playParams(getParamsFromControls());
         }, SOUND_DELAY_MSEC);
     }
     onChange.counter = 0;
-    onChange.disabled = 0;
 
     function playSeed(seed) {
         var key = String((seed / 100) | 0);
@@ -235,12 +228,16 @@ var SynthUI = (function () {
 
     function init() {
         var seedField = document.getElementById('seed');
-        var playButton = document.getElementById("play");
-
-        playButton.addEventListener("click", function (event) {
-            var seed = parseInt(seedField.value, 10);
-            playSeed(seed);
-        });
+        document.getElementById("playseed").addEventListener(
+            "click",
+            function (event) {
+                playSeed(seedField.value);
+            });
+        document.getElementById("playcontrols").addEventListener(
+            "click",
+            function (event) {
+                playParams(getParamsFromControls());
+            });
     }
 
     return {
