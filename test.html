@@ -16,11 +16,12 @@
       col.slidercol { width: 75%; }
       table { border-collapse: collapse; }
       table>tbody>tr>td { padding: 0; }
+      input:invalid { background-color: #fcc; border: 2px solid red; }
     </style>
   </head>
   <body onload="SynthUI.init(); SynthUI.initControlTable();">
     <div>
-      <input id="seed" value="8675309">
+      <input id="seed" value="8675309" type="number" min="0" max="2147483647">
       <button id="play">push for noise</button>
     </div>
     <canvas id="graph" width="600" height="400"></canvas>
