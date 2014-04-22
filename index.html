@@ -12,7 +12,7 @@
       col.controlname { width: 25%; }
       col.slidercol { width: 75%; }
       table { border-collapse: collapse; }
-      table>tbody>tr>td { padding: 0; }
+      table>tbody>tr>td { padding: 0; vertical-align: baseline; }
       input.slider { width: 100%; }
       input:invalid { background-color: #fcc; border: 2px solid red; }
     </style>
@@ -29,6 +29,19 @@
         <col class="controlname">
         <col class="slidercol">
         <tbody id="controltbody">
+          <tr>
+            <td>Waveform</td>
+            <td>
+              <select name="wave_type" id="wave_type">
+                <option value="square" checked>Square</option>
+                <option value="sine">Sine</option>
+                <option value="sawtooth">Sawtooth</option>
+                <option value="triangle">Triangle</option>
+                <option value="noise">Noise</option>
+                <option value="breaker">Breaker</option>
+              </select>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>

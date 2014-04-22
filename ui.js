@@ -4,11 +4,13 @@ var SynthUI = (function () {
     var param_info = [
         {
             id: "env_attack",
-            name: "Attack"
+            name: "Attack",
+            abs: true,
         },
         {
             id: "env_sustain",
-            name: "Sustain"
+            name: "Sustain",
+            abs: true,
         },
         {
             id: "env_punch",
@@ -16,7 +18,8 @@ var SynthUI = (function () {
         },
         {
             id: "env_decay",
-            name: "Decay"
+            name: "Decay",
+            abs: true
         },
         {
             id: "base_freq",
@@ -38,7 +41,8 @@ var SynthUI = (function () {
         },
         {
             id: "vib_strength",
-            name: "Vibrato strength"
+            name: "Vibrato strength",
+            abs: true
         },
         {
             id: "vib_speed",
@@ -82,7 +86,8 @@ var SynthUI = (function () {
         },
         {
             id: "lpf_resonance",
-            name: "Lo-pass resonance"
+            name: "Lo-pass resonance",
+            abs: true
         },
         {
             id: "lpf_ramp",
@@ -104,8 +109,10 @@ var SynthUI = (function () {
         }
     ];
 
+    // Initialize the HTML controls.
+    // This creates a bunch of sliders; the wave_type control must already exist in the HTML.
     function initControlTable() {
-        var defaults = Params();
+        document.getElementById("wave_type").addEventListener("input", onChange);
 
         var tbody = document.getElementById("controltbody");
         for (var i = 0; i < param_info.length; i++) {
@@ -120,7 +127,6 @@ var SynthUI = (function () {
             slider.max = 1;
             slider.min = p.signed ? -1 : 0;
             slider.step = 1/1000;
-            slider.value = defaults[p.id];
             slider.addEventListener("input", onChange);
             sliderCell.appendChild(slider);
             var row = document.createElement("tr");
@@ -128,11 +134,34 @@ var SynthUI = (function () {
             row.appendChild(sliderCell);
             tbody.appendChild(row);
         }
+
+        // Set all the controls to default values.
+        setControls(Params());
     }
 
+    // Mappings from strings to waveform enum values, and vice versa.
+    var waveformsByName = {
+        square: SQUARE,
+        sawtooth: SAWTOOTH,
+        sine: SINE,
+        noise: NOISE,
+        triangle: TRIANGLE,
+        breaker: BREAKER
+    };
+    var waveformsByValue = (function reverse(obj) {
+        var rev = {};
+        var keys = Object.keys(obj);
+        for (var i = 0; i < keys.length; i++) {
+            var name = keys[i], value = obj[name];
+            rev[value] = name;
+        }
+        return rev;
+    })(waveformsByName);
+
+    // Create a new Params object populated from the HTML controls.
     function getParamsFromControls() {
         var params = new Params;
-        params.wave_type = SQUARE;
+        params.wave_type = waveformsByName[document.getElementById("wave_type").value];
         params.sample_size = 16;
         params.sample_rate = PUZZLESCRIPT_SAMPLE_RATE;
 
@@ -143,11 +172,15 @@ var SynthUI = (function () {
         return params;
     }
 
+    // Change all the HTML controls to reflect the values in the given Params object.
     function setControls(params) {
-        // Change all the controls to reflect the given params
+        document.getElementById("wave_type").value = waveformsByValue[params.wave_type];
         for (var i = 0; i < param_info.length; i++) {
             var p = param_info[i];
-            document.getElementById(p.id).value = params[p.id];
+            var v = params[p.id];
+            if (p.abs)
+                v = Math.abs(v);
+            document.getElementById(p.id).value = v;
         }
     }
 
