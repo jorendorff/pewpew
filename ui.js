@@ -191,23 +191,23 @@ var SynthUI = (function () {
         playDataURL(dataURL);
 
         var c = document.getElementById('graph');
-        c.width = real_samples.length;
+        c.width = real_samples.length + 300;
         c.height = 400;
         var ctx = c.getContext("2d");
 
         var labels = [];
 
         function convertToRawData(samples) {
-            var SAMPLE_RATE = 5512;
-
+            var sampleRate = PUZZLESCRIPT_SAMPLE_RATE;
+            var dsec = 0;
             var rawData = [];
-            for (var i = 0, o = 0; i < samples.length * 0.9; i++, o++) {
-                rawData[o] = samples[i] / (1 << 15);
-                labels[o] = "";
+            for (var i = 0; i < samples.length; i++) {
+                rawData[i] = samples[i] / (1 << 15);
+                labels[i] = "";
 
-                if ((o * 10) % SAMPLE_RATE < 10) {
-                    var dsec = Math.floor(o * 10 / SAMPLE_RATE);
-                    labels[o] = Math.floor(dsec / 10) + "." + (dsec % 10);
+                if ((i * 10) % sampleRate < 10) {
+                    labels[i] = Math.floor(dsec / 10) + "." + (dsec % 10);
+                    dsec++;
                 }
             }
             return rawData;
