@@ -835,8 +835,8 @@ function applyBaseWaveform(params, periodSamples) {
         if (phase >= period) {
             phase %= period;
             if (type === NOISE) {
-                for (var i = 0; i < 32; ++i) {
-                    noise_buffer[i] = Math.random() * 2.0 - 1.0;
+                for (var j = 0; j < 32; ++j) {
+                    noise_buffer[j] = Math.random() * 2.0 - 1.0;
                 }
             }
         }
