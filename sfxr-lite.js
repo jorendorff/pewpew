@@ -1034,12 +1034,14 @@ function digitize(bitsPerSample, samples_f64) {
             samples[i] = Math.floor((samples_f64[i] + 1) * 128);
         }
     } else {
-        samples = new Uint16Array(samples_f64.length);
+        samples = new Int16Array(samples_f64.length);
         for (var i = 0; i < samples_f64.length; i++) {
             // Rescale [-1.0, 1.0) to [-32768, 32768) and clamp
             var sample = Math.floor(samples_f64[i] * (1 << 15));
-            if (sample > (1 << 15) - 1) sample = (1 << 15) - 1;
-            else if (sample < -(1 << 15)) sample = -(1 << 15);
+            if (sample > (1 << 15) - 1)
+                sample = (1 << 15) - 1;
+            else if (sample < -(1 << 15))
+                sample = -(1 << 15);
             samples[i] = sample;
         }
     }
