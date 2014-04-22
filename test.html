@@ -2,15 +2,35 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <link rel="stylesheet" href="lib/jquery-ui-1.10.4/css/ui-lightness/jquery-ui-1.10.4.css">
+    <script src="lib/jquery-1.9.1.min.js"></script>
+    <script src="lib/jquery-ui-1.10.4/js/jquery-ui-1.10.4.js"></script>
     <script src="sfxr-lite.js"></script>
     <script src="Chart.js"></script>
     <script src="ui.js"></script>
+    <style>
+      .s { margin: 10px; font: 15px monospace; color: #889988; }
+      .controls { max-width: 600px; }
+      .controltable { width: 100%; }
+      col.controlname { width: 25%; }
+      col.slidercol { width: 75%; }
+      table { border-collapse: collapse; }
+      table>tbody>tr>td { padding: 0; }
+    </style>
   </head>
-  <body onload="init_ui()">
+  <body onload="SynthUI.init(); SynthUI.initControlTable();">
     <div>
       <input id="seed" value="8675309">
       <button id="play">push for noise</button>
     </div>
-    <canvas id="graph" width="600" height="400" />
+    <canvas id="graph" width="600" height="400"></canvas>
+    <div class="controls">
+      <table class="controltable">
+        <col class="controlname">
+        <col class="slidercol">
+        <tbody id="controltbody">
+        </tbody>
+      </table>
+    </div>
   </body>
 </html>
