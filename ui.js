@@ -1,3 +1,4 @@
+
 var SynthUI = (function () {
 
     // Metadata about all the parameters the synthesizer supports.
@@ -104,29 +105,31 @@ var SynthUI = (function () {
         }
     ];
 
+    var SynthState = function(){
+      for (var i = 0; i < param_info.length; i++) {
+        var p = param_info[i];
+        this[p.id] = 0.0001;
+      }
+    };
+
+    var state = new SynthState();
+
+    var gui = new dat.GUI();
+
     function initControlTable() {
         var defaults = Params();
 
-        var tbody = document.getElementById("controltbody");
         for (var i = 0; i < param_info.length; i++) {
             var p = param_info[i];
-            var nameCell = document.createElement("td");
-            nameCell.appendChild(document.createTextNode(p.name));
-            var sliderCell = document.createElement("td");
-            var slider = document.createElement("input");
-            slider.id = p.id;
-            slider.className = "slider";
-            slider.type = "range";
-            slider.max = 1;
-            slider.min = p.signed ? -1 : 0;
-            slider.step = 1/1000;
-            slider.value = defaults[p.id];
-            slider.addEventListener("input", onChange);
-            sliderCell.appendChild(slider);
-            var row = document.createElement("tr");
-            row.appendChild(nameCell);
-            row.appendChild(sliderCell);
-            tbody.appendChild(row);
+            if(p.signed){
+              var controller = gui.add(state, p.id, -1.0, 1.0).listen();
+            } else {
+              var controller = gui.add(state, p.id, 0, 1.0).listen();
+            }
+
+            controller.onChange(function(){
+              playParams(getParamsFromControls());
+            });
         }
     }
 
@@ -138,7 +141,7 @@ var SynthUI = (function () {
 
         for (var i = 0; i < param_info.length; i++) {
             var pi = param_info[i];
-            params[pi.id] = document.getElementById(pi.id).value;
+            params[pi.id] = state[pi.id];
         }
         return params;
     }
@@ -147,7 +150,7 @@ var SynthUI = (function () {
         // Change all the controls to reflect the given params
         for (var i = 0; i < param_info.length; i++) {
             var p = param_info[i];
-            document.getElementById(p.id).value = params[p.id];
+            state[p.id] = params[p.id];
         }
     }
 
@@ -184,6 +187,7 @@ var SynthUI = (function () {
         playDataURL(dataURL);
 
         var c = document.getElementById('graph');
+        var rect = c.getBoundingClientRect();
         c.width = real_samples.length + 300;
         c.height = 400;
         var ctx = c.getContext("2d");
