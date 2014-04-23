@@ -2,35 +2,23 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <script src="sfxr.js"></script>
-    <script src="Chart.js"></script>
-    <script src="ui.js"></script>
     <style>
       .s { margin: 10px; font: 15px monospace; color: #889988; }
-      .controls { max-width: 600px; }
-      .controltable { width: 100%; }
-      col.controlname { width: 25%; }
-      col.slidercol { width: 75%; }
-      table { border-collapse: collapse; }
-      table>tbody>tr>td { padding: 0; }
-      input.slider { width: 100%; }
-      input:invalid { background-color: #fcc; border: 2px solid red; }
+      html {
+        background: #111;
+      }
     </style>
   </head>
   <body onload="SynthUI.init(); SynthUI.initControlTable();">
     <div>
       <input id="seed" value="8675309" type="number" min="0" max="2147483647">
       <button id="playseed">play this number</button>
+      <button id="playcontrols">play this noise</button>
     </div>
-    <canvas id="graph" width="600" height="400"></canvas>
-    <button id="playcontrols">play this noise</button>
-    <div class="controls">
-      <table class="controltable">
-        <col class="controlname">
-        <col class="slidercol">
-        <tbody id="controltbody">
-        </tbody>
-      </table>
-    </div>
+    <canvas id="graph"></canvas>
+    <script type="text/javascript" src="vendor/dat.gui.js"></script>
+    <script src="sfxr.js"></script>
+    <script src="Chart.js"></script>
+    <script src="ui.js"></script>
   </body>
 </html>
