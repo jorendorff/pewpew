@@ -136,7 +136,6 @@ function concat(a, b) {
 function zipWith(a, b, op) {
     var ad = a.duration, af = a.fn, bd = b.duration, bf = b.fn;
     var d = Math.max(ad, bd);
-    console.log(ad, bd, d);
     if (ad < d) {
         var af0 = af;
         af = t => (t < ad ? af0(t) : 0);
@@ -399,7 +398,7 @@ function playDataURL(dataURL) {
 
 
 
-// === Clip.prototype.play - Play any clip and cache the resulting URL.
+// === Clip.prototype.play - Play any clip and cache the Audio object for quick replay.
 
 Clip.prototype.play = function play() {
     if (!("_cachedAudio" in this)) {
@@ -413,6 +412,56 @@ Clip.prototype.play = function play() {
     this._cachedAudio.play();
 };
 
+
+
+// === Examples
+
+var boop = adsr(0.02, 0.1, 0.4, 0.5, 0.5, sine(0.2, 440));
 function playBoop() {
-    adsr(0.02, 0.1, 0.4, 0.5, 0.5, sine(0.5, 440)).play();
+    boop.play();
+}
+
+function chimes() {
+    var env = adsr_envelope(0.02, 0.1, 0.4, 0.5, 0.5);
+
+    function randomChime() {
+        var ratio = (1 + Math.floor(6 * Math.random())) / (1 + Math.floor(6 * Math.random()));
+        var wave = sine(0.1 + 0.6 * Math.random(), 440 * ratio);
+        return mul(wave, env);
+    }
+
+    function delay(clip, seconds) {
+        return concat(slice(silence, 0, seconds), clip);
+    }
+
+    var total = randomChime();
+    for (var i = 0; i < 10; i++) {
+        var delayed = delay(randomChime(), 6 * Math.random());
+        total = add(total, delayed);
+    }
+    return total;
+}
+
+function playChimes() {
+    chimes().play();
+}
+
+function playOddChimes() {
+    var clip = chimes();
+    clip = mul(clip, new Clip(Infinity, t => 3/5));
+    var sclip = sample(clip, 44000);
+
+    var accum = sclip;
+    for (var i = 0; i < 15; i++) {
+        // prepend some of silence.
+        accum = concat(slice(silence, 0, 1), accum);
+        // distort.
+        accum = perturb(accum, sine(i * 0.01, 0.1 * Math.random()));
+        // fade.
+        accum = mul(accum, new Clip(Infinity, t => 3/4));
+        // mix the undistorted original back in at the front.
+        accum = add(sclip, accum);
+    }
+
+    accum.play();
 }
