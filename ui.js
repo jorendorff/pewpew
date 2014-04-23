@@ -129,6 +129,14 @@ var SynthUI = (function () {
             playParams(getParamsFromControls());
         }
 
+        var waveformsByName = {
+            square: SQUARE,
+            sawtooth: SAWTOOTH,
+            sine: SINE,
+            noise: NOISE,
+            triangle: TRIANGLE,
+            breaker: BREAKER
+        };
         gui.add(state, 'wave_type', waveformsByName).onChange(changed);
 
         for (var i = 0; i < param_info.length; i++) {
@@ -140,25 +148,6 @@ var SynthUI = (function () {
         // Set all the controls to default values.
         setControls(Params());
     }
-
-    // Mappings from strings to waveform enum values, and vice versa.
-    var waveformsByName = {
-        square: SQUARE,
-        sawtooth: SAWTOOTH,
-        sine: SINE,
-        noise: NOISE,
-        triangle: TRIANGLE,
-        breaker: BREAKER
-    };
-    var waveformsByValue = (function reverse(obj) {
-        var rev = {};
-        var keys = Object.keys(obj);
-        for (var i = 0; i < keys.length; i++) {
-            var name = keys[i], value = obj[name];
-            rev[value] = name;
-        }
-        return rev;
-    })(waveformsByName);
 
     // Create a new Params object populated from the HTML controls.
     function getParamsFromControls() {

@@ -585,8 +585,8 @@ var BREAKER = 5;
 
 var NUM_WAVE_TYPES = 6;
 
-// Create a Params object. Tweak the parameters and then pass it to
-// synthesize() to produce sampled audio data.
+// Create a Params object populated with default values. You can tweak the
+// parameters and then pass it to synthesize() to produce sampled audio data.
 //
 // Sound generation parameters are on [0,1] unless noted SIGNED, & thus [-1,1]
 function Params() {
@@ -865,7 +865,7 @@ function applyBaseWaveform(params, periodSamples) {
         } else if (type === BREAKER) {
             sample = Math.abs(1 - fp * fp * 2) - 1;
         } else {
-            throw new Exception('bad wave type! ' + type);
+            throw new Error('bad wave type! ' + type);
         }
 
         out[i] = sample;
