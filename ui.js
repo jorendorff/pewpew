@@ -1,3 +1,4 @@
+
 var SynthUI = (function () {
 
     // Metadata about all the parameters the synthesizer supports.
@@ -111,28 +112,29 @@ var SynthUI = (function () {
 
     // Initialize the HTML controls.
     // This creates a bunch of sliders; the wave_type control must already exist in the HTML.
-    function initControlTable() {
-        document.getElementById("wave_type").addEventListener("input", onChange);
-
-        var tbody = document.getElementById("controltbody");
+    var SynthState = function () {
+        this.wave_type = SQUARE;
         for (var i = 0; i < param_info.length; i++) {
             var p = param_info[i];
-            var nameCell = document.createElement("td");
-            nameCell.appendChild(document.createTextNode(p.name));
-            var sliderCell = document.createElement("td");
-            var slider = document.createElement("input");
-            slider.id = p.id;
-            slider.className = "slider";
-            slider.type = "range";
-            slider.max = 1;
-            slider.min = p.signed ? -1 : 0;
-            slider.step = 1/1000;
-            slider.addEventListener("input", onChange);
-            sliderCell.appendChild(slider);
-            var row = document.createElement("tr");
-            row.appendChild(nameCell);
-            row.appendChild(sliderCell);
-            tbody.appendChild(row);
+            this[p.id] = 0.0001;
+        }
+    };
+
+    var state = new SynthState();
+
+    var gui = new dat.GUI();
+
+    function initControlTable() {
+        function changed() {
+            playParams(getParamsFromControls());
+        }
+
+        gui.add(state, 'wave_type', waveformsByName).onChange(changed);
+
+        for (var i = 0; i < param_info.length; i++) {
+            var p = param_info[i];
+            var controller = gui.add(state, p.id, p.signed ? -1.0 : 0, 1.0).listen();
+            controller.onChange(changed);
         }
 
         // Set all the controls to default values.
@@ -161,26 +163,26 @@ var SynthUI = (function () {
     // Create a new Params object populated from the HTML controls.
     function getParamsFromControls() {
         var params = new Params;
-        params.wave_type = waveformsByName[document.getElementById("wave_type").value];
+        params.wave_type = Number(state.wave_type);
         params.sample_size = 16;
         params.sample_rate = PUZZLESCRIPT_SAMPLE_RATE;
 
         for (var i = 0; i < param_info.length; i++) {
             var pi = param_info[i];
-            params[pi.id] = document.getElementById(pi.id).value;
+            params[pi.id] = state[pi.id];
         }
         return params;
     }
 
     // Change all the HTML controls to reflect the values in the given Params object.
     function setControls(params) {
-        document.getElementById("wave_type").value = waveformsByValue[params.wave_type];
+        state.wave_type = params.wave_type;
         for (var i = 0; i < param_info.length; i++) {
             var p = param_info[i];
             var v = params[p.id];
             if (p.abs)
                 v = Math.abs(v);
-            document.getElementById(p.id).value = v;
+            state[p.id] = v;
         }
     }
 
@@ -217,6 +219,7 @@ var SynthUI = (function () {
         playDataURL(dataURL);
 
         var c = document.getElementById('graph');
+        var rect = c.getBoundingClientRect();
         c.width = real_samples.length + 300;
         c.height = 400;
         var ctx = c.getContext("2d");
